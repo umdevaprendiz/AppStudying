@@ -4,7 +4,7 @@
 
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen)
 
 ---
 
@@ -25,17 +25,25 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 ## ✨ Funcionalidades
 
 ### Implementadas
-- [x] Cadastro e autenticação de usuários (com senha criptografada via `PasswordEncoder`)
+- [x] Cadastro e autenticação de usuários (com senha criptografada via `BCryptPasswordEncoder`)
 - [x] Busca, atualização e alteração de senha de usuário
 - [x] Criação de matérias (`Matter`) vinculadas a um usuário
+- [x] API REST para matérias (`MatterController`) documentada via Swagger/OpenAPI
+- [x] Persistência com MySQL rodando via Docker Compose
+- [x] Cache habilitado (`@EnableCaching`) para consultas de matéria por id
+- [x] Credenciais do banco de dados isoladas via variáveis de ambiente (`.env`)
 
 ### Em desenvolvimento
-- [ ] CRUD completo de matérias (listar, atualizar, deletar)
+- [ ] API REST de usuários (`UserController`)
+- [ ] CRUD completo de matérias (atualizar, deletar)
 - [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
 - [ ] Gerenciamento de sessões de estudo (`StudySession`)
 - [ ] Linha do tempo de estudos (`TimeLine`)
 - [ ] Sistema de solicitação de interação entre usuários
 - [ ] Notificações em tempo real via WebSocket
+- [ ] Regras de autorização do Spring Security (atualmente todas as rotas estão liberadas para facilitar o desenvolvimento do CRUD)
+- [ ] Testes unitários (JUnit 5 + Mockito) para os services
+- [ ] Front-end em React (estrutura inicial já criada em `/frontend`)
 - [ ] Deploy em ambiente de produção com Docker
 
 ---
@@ -45,41 +53,22 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 | Categoria | Tecnologia |
 |---|---|
 | Linguagem | Java 21 |
-| Framework | Spring Boot |
+| Framework | Spring Boot 4.1.0 |
 | Segurança | Spring Security |
-| Persistência | Spring Data JPA |
+| Persistência | Spring Data JPA + Hibernate |
 | Banco de dados | MySQL |
+| Cache | Spring Cache |
+| Documentação de API | springdoc-openapi (Swagger UI) |
 | Comunicação em tempo real | WebSocket |
-| Containerização | Docker |
+| Containerização | Docker / Docker Compose |
 | Build | Maven |
+| Front-end | React (Vite) |
 
 ---
 
 ## 🏗️ Estrutura do projeto
 
-> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.
-
-```
-src/main/java/com/example/AppStudying/
-├── configuration/     # Configurações gerais (PasswordEncoder, etc.)
-├── dto/                # Objetos de transferência de dados
-├── enums/              # Enumeradores (ex: TypeStatus)
-├── model/              # Entidades JPA (Matter, StudySession, TimeLine, Topic, User)
-├── repository/         # Interfaces JpaRepository
-├── services/           # Regras de negócio
-└── webSocketConfig/    # Configuração de WebSocket
-```
-
----
-
-## 🚀 Como rodar o projeto
-
-> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.
-
-### Pré-requisitos
-- Java 21+
-- Docker e Docker Compose
-- Maven (ou usar o wrapper `./mvnw` incluso no projeto)
+> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.)
 
 ### Passos
 
