@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen)
-![React](https://shields.io)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=white)
 
 ---
 
@@ -33,19 +33,27 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] Persistência com MySQL rodando via Docker Compose
 - [x] Cache habilitado (`@EnableCaching`) para consultas de matéria por id
 - [x] Credenciais do banco de dados isoladas via variáveis de ambiente (`.env`)
-- [x] API REST de usuários (`UserController`)
+- [x] API REST de usuários (`UserController`) — registro, busca por id/email, login e atualização
 - [x] CRUD completo de matérias (atualizar, deletar)
+- [x] Registro de eventos em linha do tempo (`TimeLineController`) — criação e listagem por usuário
 
 ### Em desenvolvimento
 - [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
 - [ ] Gerenciamento de sessões de estudo (`StudySession`)
-- [ ] Linha do tempo de estudos (`TimeLine`)
 - [ ] Sistema de solicitação de interação entre usuários
 - [ ] Notificações em tempo real via WebSocket
 - [ ] Regras de autorização do Spring Security (atualmente todas as rotas estão liberadas para facilitar o desenvolvimento do CRUD)
 - [ ] Testes unitários (JUnit 5 + Mockito) para os services
 - [ ] Front-end em React (estrutura inicial já criada em `/frontend`)
 - [ ] Deploy em ambiente de produção com Docker
+
+---
+
+## 🖼️ Screenshots
+
+> Documentação interativa da API via Swagger UI, rodando em `http://localhost:8080/swagger-ui.html`.
+
+*(Prints em breve)*
 
 ---
 
@@ -69,40 +77,4 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 ## 🏗️ Estrutura do projeto
 
-> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.)
-
-### Passos
-
-```bash
-# Clone o repositório
-git clone https://github.com/umdevaprendiz/AppStudying.git
-cd AppStudying
-
-# Suba a aplicação e o banco de dados via Docker Compose
-docker compose up -d --build
-
-# Acompanhe os logs da aplicação
-docker compose logs -f app
-```
-
-## 🗺️ Roadmap
-
-1. Finalizar CRUD de matérias e tópicos
-2. Implementar sessões de estudo com cálculo de duração
-3. Construir agregação de dados na `TimeLine`
-4. Implementar sistema de solicitação de interação entre usuários
-5. Integrar notificações em tempo real via WebSocket
-6. Criar tratamento centralizado de exceções (`@ControllerAdvice`)
-7. Escrever testes automatizados
-8. Deploy em ambiente de produção
-
----
-
-## 👤 Autor
-
-Desenvolvido por [**Sérgio Guilherme**](https://github.com/umdevaprendiz) como projeto de portfólio, aliado ao aprendizado prático de Spring Boot, arquitetura em camadas e comunicação em tempo real.
-
----
-
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.
