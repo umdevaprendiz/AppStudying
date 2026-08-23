@@ -5,6 +5,7 @@
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen)
+![React](![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black))
 
 ---
 
@@ -32,10 +33,10 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] Persistência com MySQL rodando via Docker Compose
 - [x] Cache habilitado (`@EnableCaching`) para consultas de matéria por id
 - [x] Credenciais do banco de dados isoladas via variáveis de ambiente (`.env`)
+- [x] API REST de usuários (`UserController`)
+- [x] CRUD completo de matérias (atualizar, deletar)
 
 ### Em desenvolvimento
-- [ ] API REST de usuários (`UserController`)
-- [ ] CRUD completo de matérias (atualizar, deletar)
 - [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
 - [ ] Gerenciamento de sessões de estudo (`StudySession`)
 - [ ] Linha do tempo de estudos (`TimeLine`)
