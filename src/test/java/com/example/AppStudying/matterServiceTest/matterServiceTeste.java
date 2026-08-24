@@ -14,8 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,9 +48,42 @@ public class matterServiceTeste {
     }
 
     @Test
+    void SucessoMateriaExistir(){
+        Long id = 99L;
+        Matter matter = new Matter();
+        matter.setNome("Programação");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMateriaNaoExiste() {
+        Long id = 1L;
+
+        when(matterRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            matterService.buscarPorId(id);
+        });
+
+        verify(matterRepository, times(1)).findById(id);
+
+    }
+
+    @Test
     void deveLancarExcecaoQuandoUsuarioNaoExiste() {
 
+        Long userId = 1L;
+        Matter matter = new Matter();
+        matter.setNome("Cálculo 1");
 
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            matterService.criarMatter(matter, userId);
+        });
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(matterRepository, never()).save(matter);
     }
 
 }

@@ -107,6 +107,17 @@ public class TimeLineServiceTeste {
 
     @Test
     void buscarIdSucesso(){
+        Long id = 10L;
+        TimeLine timeLine = new TimeLine();
+        timeLine.setDescription("Estudando Cálculo 2");
+        timeLine.setId(id);
+
+        when(timeLineRepository.findById(id)).thenReturn(Optional.of(timeLine));
+
+        TimeLine resultado = timeLineService.buscarPorId(id);
+
+        assertEquals("Estudando Cálculo 2", resultado.getDescription());
+        verify(timeLineRepository, times(1)).findById(id);
 
     }
 }
