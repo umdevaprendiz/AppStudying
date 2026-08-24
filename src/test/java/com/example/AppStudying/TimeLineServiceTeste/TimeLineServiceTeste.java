@@ -92,11 +92,21 @@ public class TimeLineServiceTeste {
 
     @Test
     void buscarIdNaoEncontrado(){
-        Long Id = 88L;
+        Long id = 88L; // Criamos um id aleatório
+        TimeLine timeLine = new TimeLine(); //Criamos novos parâmetros
+        timeLine.setId(id);
+        timeLine.setDescription("Estudou Cálculo 1");
 
-        when(timeLineRepository.findById(Id)).thenReturn(Optional.empty());
+        when(timeLineRepository.findById(id)).thenReturn(Optional.empty()); //Quando buscar por id (88) o retorno será vazio.
+        assertThrows(IllegalStateException.class, () -> {
+            timeLineService.buscarPorId(id);
+        });
 
-        //continuando...
+        verify(timeLineRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void buscarIdSucesso(){
 
     }
 }
