@@ -31,14 +31,14 @@ public class matterServiceTeste {
     private MatterService matterService;
 
     @Test
-    void TesteDeCriaçãoSucessoQuandoUsuárioExistir() {
+    void deveCriarMatterComSucessoQuandoUsuarioExiste() {
         Long userId = 1L;
         User user = new User();
         Matter matter = new Matter();
         matter.setNome("Cálculo 1");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(matterRepository.existsByNomeAndUserId("Cálculo1", userId)).thenReturn(false);
+        when(matterRepository.existsByNomeAndUserId("Cálculo 1", userId)).thenReturn(false);
         when(matterRepository.save(matter)).thenReturn(matter);
 
         Matter resultado = matterService.criarMatter(matter, userId);
@@ -52,6 +52,13 @@ public class matterServiceTeste {
         Long id = 99L;
         Matter matter = new Matter();
         matter.setNome("Programação");
+
+        when(matterRepository.findById(id)).thenReturn(Optional.of(matter));
+
+        Matter resultado = matterService.buscarPorId(id);
+
+        assertEquals("Programação", resultado.getNome());
+        verify(matterRepository, times(1)).findById(id);
     }
 
     @Test
