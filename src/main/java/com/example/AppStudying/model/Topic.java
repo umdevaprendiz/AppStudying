@@ -16,8 +16,8 @@ import java.util.UUID;
 @Setter
 public class Topic {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String nome;
 
