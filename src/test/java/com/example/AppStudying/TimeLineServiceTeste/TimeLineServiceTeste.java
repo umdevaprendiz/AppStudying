@@ -120,4 +120,6 @@ public class TimeLineServiceTeste {
         verify(timeLineRepository, times(1)).findById(id);
 
     }
+
+    //Concluído.
 }
