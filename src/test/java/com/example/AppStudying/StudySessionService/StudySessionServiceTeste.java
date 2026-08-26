@@ -20,8 +20,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -83,6 +82,75 @@ public class StudySessionServiceTeste {
         verify(topicRepository, times(1)).findById(topicId);
         verify(studySessionRepository, times(1)).save(any(StudySession.class));
     }
+
+    @Test
+    void deveLancarExcecaoQuandoUsuarioNaoEncontrado(){
+        Long userId = 1L;
+        Long matterId = 2L;
+        Long topicId = 3L;
+
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.iniciarSessao(userId, matterId, topicId);
+        });
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(matterRepository, never()).findById(any());
+        verify(studySessionRepository, never()).save(any(StudySession.class));
+
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMatterNaoencontrada(){
+        Long userId = 1L;
+        Long matterId = 2L;
+        Long topicId = 3L;
+
+        User user = new User();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(matterRepository.findById(matterId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.iniciarSessao(userId, matterId, topicId);});
+
+            verify(userRepository, times(1)).findById(userId);
+            verify(matterRepository, times(1)).findById(matterId);
+            verify(studySessionRepository, never()).save(any(StudySession.class));
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoTopicNaoEncontrado(){
+        Long userId = 1L;
+        Long matterId = 2L;
+        Long topicId = 3L;
+
+        Matter matter = new Matter();
+        matter.setId(matterId);
+
+        User user = new User();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(matterRepository.findById(matterId)).thenReturn(Optional.of(matter));
+        when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.iniciarSessao(userId, matterId, topicId);
+        });
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(matterRepository, times(1)).findById(matterId);
+        verify(topicRepository, times(1)).findById(topicId);
+        verify(studySessionRepository, never()).save(any(StudySession.class));
+
+
+
+    }
+
 
 }
 
