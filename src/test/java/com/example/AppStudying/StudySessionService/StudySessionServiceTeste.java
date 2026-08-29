@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -151,6 +152,153 @@ public class StudySessionServiceTeste {
 
     }
 
+    @Test
+    void deveEncerrarSessaoComSucesso(){
+        Long sessionId = 10L;
+
+        StudySession studySession = new StudySession();
+        studySession.setId(sessionId);
+        studySession.setInicio(LocalDateTime.now().minusMinutes(30));
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
+        when(studySessionRepository.save(any(StudySession.class))).thenReturn(studySession);
+
+        StudySession resultado = studySessionService.encerrarSessao(sessionId);
+
+        assertNotNull(resultado);
+        assertNotNull(resultado.getFim());
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+        verify(studySessionRepository, times(1)).save(studySession);
+    }
+
+    @Test
+    void deveLancarExcecaoAoEncerrarSessaoInexistente(){
+        Long sessionId = 10L;
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.encerrarSessao(sessionId);
+        });
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+        verify(studySessionRepository, never()).save(any(StudySession.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoEncerrarSessaoJaEncerrada(){
+        Long sessionId = 10L;
+
+        StudySession studySession = new StudySession();
+        studySession.setId(sessionId);
+        studySession.setInicio(LocalDateTime.now().minusMinutes(30));
+        studySession.setFim(LocalDateTime.now());
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.encerrarSessao(sessionId);
+        });
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+        verify(studySessionRepository, never()).save(any(StudySession.class));
+    }
+
+    @Test
+    void deveCalcularDuracaoComSucesso(){
+        Long sessionId = 10L;
+        LocalDateTime inicio = LocalDateTime.now().minusMinutes(45);
+        LocalDateTime fim = LocalDateTime.now();
+
+        StudySession studySession = new StudySession();
+        studySession.setId(sessionId);
+        studySession.setInicio(inicio);
+        studySession.setFim(fim);
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
+
+        Long duracao = studySessionService.calcularDuracao(sessionId);
+
+        assertEquals(Duration.between(inicio, fim).toMinutes(), duracao);
+        verify(studySessionRepository, times(1)).findById(sessionId);
+    }
+
+    @Test
+    void deveLancarExcecaoAoCalcularDuracaoDeSessaoInexistente(){
+        Long sessionId = 10L;
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.calcularDuracao(sessionId);
+        });
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+    }
+
+    @Test
+    void deveLancarExcecaoAoCalcularDuracaoDeSessaoNaoEncerrada(){
+        Long sessionId = 10L;
+
+        StudySession studySession = new StudySession();
+        studySession.setId(sessionId);
+        studySession.setInicio(LocalDateTime.now());
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.calcularDuracao(sessionId);
+        });
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+    }
+
+    @Test
+    void deveListarSessoesPorUsuario(){
+        Long userId = 1L;
+
+        StudySession sessao1 = new StudySession();
+        sessao1.setId(1L);
+
+        StudySession sessao2 = new StudySession();
+        sessao2.setId(2L);
+
+        when(studySessionRepository.findByUserId(userId)).thenReturn(List.of(sessao1, sessao2));
+
+        List<StudySession> resultado = studySessionService.listarPorUsuario(userId);
+
+        assertEquals(2, resultado.size());
+        verify(studySessionRepository, times(1)).findByUserId(userId);
+    }
+
+    @Test
+    void deveBuscarSessaoPorIdComSucesso(){
+        Long sessionId = 10L;
+
+        StudySession studySession = new StudySession();
+        studySession.setId(sessionId);
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
+
+        StudySession resultado = studySessionService.buscarPorId(sessionId);
+
+        assertEquals(sessionId, resultado.getId());
+        verify(studySessionRepository, times(1)).findById(sessionId);
+    }
+
+    @Test
+    void deveLancarExcecaoAoBuscarSessaoPorIdInexistente(){
+        Long sessionId = 10L;
+
+        when(studySessionRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            studySessionService.buscarPorId(sessionId);
+        });
+
+        verify(studySessionRepository, times(1)).findById(sessionId);
+    }
 
 }
 

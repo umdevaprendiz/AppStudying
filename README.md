@@ -36,14 +36,14 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] API REST de usuários (`UserController`) — registro, busca por id/email, login e atualização
 - [x] CRUD completo de matérias (atualizar, deletar)
 - [x] Registro de eventos em linha do tempo (`TimeLineController`) — criação e listagem por usuário
+- [x] Sistema de solicitação de interação entre usuários (`StudyRequest`) — enviar, aceitar e recusar solicitações de estudo
+- [x] Notificações em tempo real via WebSocket (STOMP + SockJS) quando uma solicitação é enviada, aceita ou recusada
+- [x] Testes unitários (JUnit 5 + Mockito) para os services (`UserService`, `MatterService`, `TimeLineService`, `StudySessionService`, `StudyRequestService`)
 
 ### Em desenvolvimento
 - [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
 - [ ] Gerenciamento de sessões de estudo (`StudySession`)
-- [ ] Sistema de solicitação de interação entre usuários
-- [ ] Notificações em tempo real via WebSocket
 - [ ] Regras de autorização do Spring Security (atualmente todas as rotas estão liberadas para facilitar o desenvolvimento do CRUD)
-- [ ] Testes unitários (JUnit 5 + Mockito) para os services
 - [ ] Front-end em React (estrutura inicial já criada em `/frontend`)
 - [ ] Deploy em ambiente de produção com Docker
 

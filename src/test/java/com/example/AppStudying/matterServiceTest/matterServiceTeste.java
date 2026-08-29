@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,6 +92,24 @@ public class matterServiceTeste {
 
         verify(userRepository, times(1)).findById(userId);
         verify(matterRepository, never()).save(matter);
+    }
+
+    @Test
+    void deveListarMateriasPorUsuario(){
+        Long userId = 1L;
+
+        Matter matter1 = new Matter();
+        matter1.setNome("Cálculo 1");
+
+        Matter matter2 = new Matter();
+        matter2.setNome("Programação");
+
+        when(matterRepository.findByUserId(userId)).thenReturn(List.of(matter1, matter2));
+
+        List<Matter> resultado = matterService.listarPorUsuario(userId);
+
+        assertEquals(2, resultado.size());
+        verify(matterRepository, times(1)).findByUserId(userId);
     }
 
     //Concluído.
