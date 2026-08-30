@@ -27,7 +27,14 @@ public class FlywayConfig {
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
-                .baselineOnMigrate(false)
+                // Bancos de dev que já existiam antes do Flyway entrar no projeto
+                // (criados pelo antigo ddl-auto=update) têm as tabelas mas não têm
+                // a tabela de histórico do Flyway. baselineOnMigrate faz o Flyway
+                // tratar o schema atual como se a baseline (V1, por padrão) já
+                // tivesse rodado, e só aplica as migrations mais novas a partir
+                // daí — sem isso, ele recusa migrar um schema "não vazio" por
+                // segurança.
+                .baselineOnMigrate(true)
                 .load();
         flyway.migrate();
         return flyway;
