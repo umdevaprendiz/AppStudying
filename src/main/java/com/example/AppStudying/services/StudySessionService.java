@@ -58,9 +58,11 @@ public class StudySessionService {
         return studySessionRepository.save(studySession);
     }
 
-    public StudySession encerrarSessao(Long sessionId) {
+    public StudySession encerrarSessao(Long sessionId, Long currentUserId) {
         StudySession studySession = studySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalStateException("Sessão de estudos não encontrado!"));
+
+        verificarDono(studySession, currentUserId);
 
         if (studySession.getFim() != null) {
             throw new IllegalStateException("Sua sessão já foi encerrada!");
@@ -105,9 +107,11 @@ public class StudySessionService {
         return new ArrayList<>(resumoPorMateria.values());
     }
 
-    public Long calcularDuracao(Long sessionId) {
+    public Long calcularDuracao(Long sessionId, Long currentUserId) {
         StudySession session = studySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalStateException("Sessão não encontrada!"));
+
+        verificarDono(session, currentUserId);
 
         if (session.getFim() == null) {
             throw new IllegalStateException("Sua sessão ainda não foi encerrada!");
@@ -121,8 +125,16 @@ public class StudySessionService {
         return studySessionRepository.findByUserId(userId);
     }
 
-    public StudySession buscarPorId(Long id) {
-        return studySessionRepository.findById(id)
+    public StudySession buscarPorId(Long id, Long currentUserId) {
+        StudySession session = studySessionRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Sessão de estudos não encontrada!"));
+        verificarDono(session, currentUserId);
+        return session;
+    }
+
+    private void verificarDono(StudySession session, Long currentUserId) {
+        if (session.getUser() == null || !session.getUser().getId().equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para acessar essa sessão de estudos!");
+        }
     }
 }

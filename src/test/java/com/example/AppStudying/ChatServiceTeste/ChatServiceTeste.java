@@ -297,24 +297,52 @@ public class ChatServiceTeste {
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
         when(conversationRepository.save(any(Conversation.class))).thenReturn(conversation);
 
-        Conversation resultado = chatService.aceitarConversa(conversationId);
+        Conversation resultado = chatService.aceitarConversa(conversationId, receiverId);
 
         assertEquals(RequestStatus.ACEITA, resultado.getStatus());
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/chat-inbox/" + receiverId), any(Long.class));
     }
 
     @Test
-    void deveLancarExcecaoAoAceitarConversaJaRespondida(){
+    void deveLancarExcecaoAoAceitarConversaDeOutraPessoa(){
         Long conversationId = 5L;
+        Long receiverId = 2L;
+        Long outroUsuarioId = 99L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
 
         Conversation conversation = new Conversation();
         conversation.setId(conversationId);
+        conversation.setReceiver(receiver);
+        conversation.setStatus(RequestStatus.PENDENTE);
+
+        when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+
+        assertThrows(IllegalStateException.class, () -> {
+            chatService.aceitarConversa(conversationId, outroUsuarioId);
+        });
+
+        verify(conversationRepository, never()).save(any(Conversation.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoAceitarConversaJaRespondida(){
+        Long conversationId = 5L;
+        Long receiverId = 2L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
+
+        Conversation conversation = new Conversation();
+        conversation.setId(conversationId);
+        conversation.setReceiver(receiver);
         conversation.setStatus(RequestStatus.ACEITA);
 
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
 
         assertThrows(IllegalStateException.class, () -> {
-            chatService.aceitarConversa(conversationId);
+            chatService.aceitarConversa(conversationId, receiverId);
         });
 
         verify(conversationRepository, never()).save(any(Conversation.class));
@@ -336,10 +364,33 @@ public class ChatServiceTeste {
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
         when(conversationRepository.save(any(Conversation.class))).thenReturn(conversation);
 
-        Conversation resultado = chatService.recusarConversa(conversationId);
+        Conversation resultado = chatService.recusarConversa(conversationId, receiverId);
 
         assertEquals(RequestStatus.RECUSADA, resultado.getStatus());
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/chat-inbox/" + receiverId), any(Long.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoRecusarConversaDeOutraPessoa(){
+        Long conversationId = 5L;
+        Long receiverId = 2L;
+        Long outroUsuarioId = 99L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
+
+        Conversation conversation = new Conversation();
+        conversation.setId(conversationId);
+        conversation.setReceiver(receiver);
+        conversation.setStatus(RequestStatus.PENDENTE);
+
+        when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+
+        assertThrows(IllegalStateException.class, () -> {
+            chatService.recusarConversa(conversationId, outroUsuarioId);
+        });
+
+        verify(conversationRepository, never()).save(any(Conversation.class));
     }
 
     @Test

@@ -19,6 +19,7 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     public User registerUser(User user) {
+        user.setId(null);
 
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalStateException("Email já está cadastrado!");
@@ -42,18 +43,6 @@ public class UserService {
                 .orElseThrow(() -> new IllegalStateException("Usuário não encontrado!"));
         }
 
-        public User autenticar(String email, String senha) {
-
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException("Usuário não encontrado!"));
-
-            if (!passwordEncoder.matches(senha, user.getPassword())) {
-                throw new IllegalStateException("Senha incorreta!");
-            }
-
-            return user;
-        }
-
         public List<User> listarSugestoes(Long userId, int limite){
         List<User> candidatos = new ArrayList<>(userRepository.findAll());
         candidatos.removeIf(u -> u.getId().equals(userId));
@@ -65,7 +54,11 @@ public class UserService {
         return candidatos;
         }
 
-        public User atualizarUsuario(Long id, String novoNome, String novoEmail){
+        public User atualizarUsuario(Long id, String novoNome, String novoEmail, Long currentUserId){
+        if (!id.equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para atualizar esse usuário!");
+        }
+
         User user = buscarPorId(id);
         user.setName(novoNome);
         user.setEmail(novoEmail);

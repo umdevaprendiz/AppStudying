@@ -164,19 +164,24 @@ public class StudyRequestServiceTeste {
     void deveAceitarSolicitacaoComSucesso(){
         Long requestId = 10L;
         Long requesterId = 1L;
+        Long receiverId = 2L;
 
         User requester = new User();
         requester.setId(requesterId);
 
+        User receiver = new User();
+        receiver.setId(receiverId);
+
         StudyRequest studyRequest = new StudyRequest();
         studyRequest.setId(requestId);
         studyRequest.setRequester(requester);
+        studyRequest.setReceiver(receiver);
         studyRequest.setStatus(RequestStatus.PENDENTE);
 
         when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
         when(studyRequestRepository.save(any(StudyRequest.class))).thenReturn(studyRequest);
 
-        StudyRequest resultado = studyRequestService.aceitarSolicitacao(requestId);
+        StudyRequest resultado = studyRequestService.aceitarSolicitacao(requestId, receiverId);
 
         assertEquals(RequestStatus.ACEITA, resultado.getStatus());
         assertNotNull(resultado.getRespondedAt());
@@ -186,13 +191,36 @@ public class StudyRequestServiceTeste {
     }
 
     @Test
+    void deveLancarExcecaoAoAceitarSolicitacaoDeOutraPessoa(){
+        Long requestId = 10L;
+        Long receiverId = 2L;
+        Long outroUsuarioId = 99L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
+
+        StudyRequest studyRequest = new StudyRequest();
+        studyRequest.setId(requestId);
+        studyRequest.setReceiver(receiver);
+        studyRequest.setStatus(RequestStatus.PENDENTE);
+
+        when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
+
+        assertThrows(IllegalStateException.class, () -> {
+            studyRequestService.aceitarSolicitacao(requestId, outroUsuarioId);
+        });
+
+        verify(studyRequestRepository, never()).save(any(StudyRequest.class));
+    }
+
+    @Test
     void deveLancarExcecaoAoAceitarSolicitacaoInexistente(){
         Long requestId = 10L;
 
         when(studyRequestRepository.findById(requestId)).thenReturn(Optional.empty());
 
         assertThrows(IllegalStateException.class, () -> {
-            studyRequestService.aceitarSolicitacao(requestId);
+            studyRequestService.aceitarSolicitacao(requestId, 1L);
         });
 
         verify(studyRequestRepository, never()).save(any(StudyRequest.class));
@@ -201,15 +229,20 @@ public class StudyRequestServiceTeste {
     @Test
     void deveLancarExcecaoAoAceitarSolicitacaoJaRespondida(){
         Long requestId = 10L;
+        Long receiverId = 2L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
 
         StudyRequest studyRequest = new StudyRequest();
         studyRequest.setId(requestId);
+        studyRequest.setReceiver(receiver);
         studyRequest.setStatus(RequestStatus.ACEITA);
 
         when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
 
         assertThrows(IllegalStateException.class, () -> {
-            studyRequestService.aceitarSolicitacao(requestId);
+            studyRequestService.aceitarSolicitacao(requestId, receiverId);
         });
 
         verify(studyRequestRepository, never()).save(any(StudyRequest.class));
@@ -219,19 +252,24 @@ public class StudyRequestServiceTeste {
     void deveRecusarSolicitacaoComSucesso(){
         Long requestId = 10L;
         Long requesterId = 1L;
+        Long receiverId = 2L;
 
         User requester = new User();
         requester.setId(requesterId);
 
+        User receiver = new User();
+        receiver.setId(receiverId);
+
         StudyRequest studyRequest = new StudyRequest();
         studyRequest.setId(requestId);
         studyRequest.setRequester(requester);
+        studyRequest.setReceiver(receiver);
         studyRequest.setStatus(RequestStatus.PENDENTE);
 
         when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
         when(studyRequestRepository.save(any(StudyRequest.class))).thenReturn(studyRequest);
 
-        StudyRequest resultado = studyRequestService.recusarSolicitacao(requestId);
+        StudyRequest resultado = studyRequestService.recusarSolicitacao(requestId, receiverId);
 
         assertEquals(RequestStatus.RECUSADA, resultado.getStatus());
         assertNotNull(resultado.getRespondedAt());
@@ -241,17 +279,45 @@ public class StudyRequestServiceTeste {
     }
 
     @Test
-    void deveLancarExcecaoAoRecusarSolicitacaoJaRespondida(){
+    void deveLancarExcecaoAoRecusarSolicitacaoDeOutraPessoa(){
         Long requestId = 10L;
+        Long receiverId = 2L;
+        Long outroUsuarioId = 99L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
 
         StudyRequest studyRequest = new StudyRequest();
         studyRequest.setId(requestId);
+        studyRequest.setReceiver(receiver);
+        studyRequest.setStatus(RequestStatus.PENDENTE);
+
+        when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
+
+        assertThrows(IllegalStateException.class, () -> {
+            studyRequestService.recusarSolicitacao(requestId, outroUsuarioId);
+        });
+
+        verify(studyRequestRepository, never()).save(any(StudyRequest.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoRecusarSolicitacaoJaRespondida(){
+        Long requestId = 10L;
+        Long receiverId = 2L;
+
+        User receiver = new User();
+        receiver.setId(receiverId);
+
+        StudyRequest studyRequest = new StudyRequest();
+        studyRequest.setId(requestId);
+        studyRequest.setReceiver(receiver);
         studyRequest.setStatus(RequestStatus.RECUSADA);
 
         when(studyRequestRepository.findById(requestId)).thenReturn(Optional.of(studyRequest));
 
         assertThrows(IllegalStateException.class, () -> {
-            studyRequestService.recusarSolicitacao(requestId);
+            studyRequestService.recusarSolicitacao(requestId, receiverId);
         });
 
         verify(studyRequestRepository, never()).save(any(StudyRequest.class));

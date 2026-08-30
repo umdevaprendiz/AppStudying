@@ -58,8 +58,12 @@ public class StudyRequestService {
         return salva;
     }
 
-    public StudyRequest aceitarSolicitacao(Long requestId) {
+    public StudyRequest aceitarSolicitacao(Long requestId, Long currentUserId) {
         StudyRequest studyRequest = buscarPorId(requestId);
+
+        if (!studyRequest.getReceiver().getId().equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para responder essa solicitação!");
+        }
 
         if (studyRequest.getStatus() != RequestStatus.PENDENTE) {
             throw new IllegalStateException("Essa solicitação já foi respondida!");
@@ -74,8 +78,12 @@ public class StudyRequestService {
         return salva;
     }
 
-    public StudyRequest recusarSolicitacao(Long requestId) {
+    public StudyRequest recusarSolicitacao(Long requestId, Long currentUserId) {
         StudyRequest studyRequest = buscarPorId(requestId);
+
+        if (!studyRequest.getReceiver().getId().equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para responder essa solicitação!");
+        }
 
         if (studyRequest.getStatus() != RequestStatus.PENDENTE) {
             throw new IllegalStateException("Essa solicitação já foi respondida!");

@@ -8,6 +8,9 @@ export const Api = {
   login(email, senha) {
     return request("POST", "/api/users/login", { params: { email, senha } });
   },
+  logout() {
+    return request("POST", "/api/users/logout");
+  },
   buscarUserPorEmail(email) {
     return request("GET", `/api/users/buscarUser/${encodeURIComponent(email)}`);
   },
@@ -17,13 +20,13 @@ export const Api = {
   atualizarUsuario(id, novoNome, email) {
     return request("PUT", `/api/users/${id}`, { params: { novoNome, email } });
   },
-  listarSugestoes(userId, limite = 10) {
-    return request("GET", "/api/users/sugestoes", { params: { userId, limite } });
+  listarSugestoes(limite = 10) {
+    return request("GET", "/api/users/sugestoes", { params: { limite } });
   },
 
   // Matters
-  criarMatter(nome, userId) {
-    return request("POST", "/api/matters", { params: { userId }, body: { nome } });
+  criarMatter(nome) {
+    return request("POST", "/api/matters", { body: { nome } });
   },
   buscarMatterPorId(id) {
     return request("GET", `/api/matters/${id}`);
@@ -33,9 +36,9 @@ export const Api = {
   },
 
   // Study Requests
-  enviarSolicitacao(requesterId, receiverId, matterId, message) {
+  enviarSolicitacao(receiverId, matterId, message) {
     return request("POST", "/api/study-requests", {
-      params: { requesterId, receiverId, matterId, message },
+      params: { receiverId, matterId, message },
     });
   },
   aceitarSolicitacao(id) {
@@ -55,8 +58,8 @@ export const Api = {
   },
 
   // Timeline
-  criarEvento(description, userId) {
-    return request("POST", "/api/TimeLine/criarEvento", { params: { description, userId } });
+  criarEvento(description) {
+    return request("POST", "/api/TimeLine/criarEvento", { params: { description } });
   },
   listarEventosPorUsuario(userId) {
     return request("GET", "/api/TimeLine/listarUsuarios", { params: { userId } });
@@ -66,14 +69,14 @@ export const Api = {
   },
 
   // Study Sessions (cronômetro)
-  iniciarSessao(userId, matterId, topicId) {
-    return request("POST", "/api/study-sessions/iniciar", { params: { userId, matterId, topicId } });
+  iniciarSessao(matterId, topicId) {
+    return request("POST", "/api/study-sessions/iniciar", { params: { matterId, topicId } });
   },
   encerrarSessao(id) {
     return request("PUT", `/api/study-sessions/${id}/encerrar`);
   },
-  buscarSessaoAtiva(userId, matterId) {
-    return request("GET", "/api/study-sessions/ativa", { params: { userId, matterId } });
+  buscarSessaoAtiva(matterId) {
+    return request("GET", "/api/study-sessions/ativa", { params: { matterId } });
   },
   listarSessoesPorUsuario(userId) {
     return request("GET", `/api/study-sessions/usuario/${userId}`);
@@ -83,11 +86,11 @@ export const Api = {
   },
 
   // Chat
-  enviarMensagem(senderId, receiverId, content) {
-    return request("POST", "/api/chat", { params: { senderId, receiverId, content } });
+  enviarMensagem(receiverId, content) {
+    return request("POST", "/api/chat", { params: { receiverId, content } });
   },
-  listarConversa(userId1, userId2) {
-    return request("GET", "/api/chat/conversa", { params: { userId1, userId2 } });
+  listarConversa(otherUserId) {
+    return request("GET", "/api/chat/conversa", { params: { userId2: otherUserId } });
   },
   listarSolicitacoesMensagem(userId) {
     return request("GET", `/api/chat/solicitacoes/${userId}`);

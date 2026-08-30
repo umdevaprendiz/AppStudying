@@ -20,6 +20,8 @@ public class MatterService {
     private UserRepository userRepository;
 
     public Matter criarMatter(Matter matter, Long userId) {
+        matter.setId(null);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
 

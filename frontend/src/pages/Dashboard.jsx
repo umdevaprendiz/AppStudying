@@ -61,7 +61,7 @@ export function Dashboard() {
 
     const entries = await Promise.all(
       list.map(async (m) => {
-        const active = await Api.buscarSessaoAtiva(user.id, m.id);
+        const active = await Api.buscarSessaoAtiva(m.id);
         return active ? [m.id, { sessionId: active.id, inicio: active.inicio }] : null;
       })
     );
@@ -81,8 +81,8 @@ export function Dashboard() {
   }, [user.id]);
 
   const loadSuggestions = useCallback(async () => {
-    setSuggestions(await Api.listarSugestoes(user.id, 10));
-  }, [user.id]);
+    setSuggestions(await Api.listarSugestoes(10));
+  }, []);
 
   function showToast(text) {
     const id = crypto.randomUUID();
@@ -147,7 +147,7 @@ export function Dashboard() {
   async function handleCreateMatter(e) {
     e.preventDefault();
     if (!matterName.trim()) return;
-    await Api.criarMatter(matterName.trim(), user.id);
+    await Api.criarMatter(matterName.trim());
     setMatterName("");
     await loadMatters();
   }
@@ -155,7 +155,7 @@ export function Dashboard() {
   async function handleCreateEvent(e) {
     e.preventDefault();
     if (!eventDescription.trim()) return;
-    await Api.criarEvento(eventDescription.trim(), user.id);
+    await Api.criarEvento(eventDescription.trim());
     setEventDescription("");
     await loadEvents();
   }
@@ -166,7 +166,6 @@ export function Dashboard() {
     try {
       const receiver = await Api.buscarUserPorEmail(requestForm.receiverEmail.trim());
       await Api.enviarSolicitacao(
-        user.id,
         receiver.id,
         requestForm.matterId || undefined,
         requestForm.message.trim() || undefined
@@ -188,7 +187,7 @@ export function Dashboard() {
   }
 
   async function handleStartTimer(matterId) {
-    const session = await Api.iniciarSessao(user.id, matterId);
+    const session = await Api.iniciarSessao(matterId);
     setActiveSessions((prev) => ({ ...prev, [matterId]: { sessionId: session.id, inicio: session.inicio } }));
   }
 
@@ -207,7 +206,7 @@ export function Dashboard() {
   async function openChat(partner) {
     if (!partner?.id) return;
     setOpenChatWith(partner);
-    setChatMessages(await Api.listarConversa(user.id, partner.id));
+    setChatMessages(await Api.listarConversa(partner.id));
   }
 
   function closeChat() {
@@ -218,9 +217,17 @@ export function Dashboard() {
   async function handleSendMessage(text) {
     if (!openChatWith) return;
     try {
-      await Api.enviarMensagem(user.id, openChatWith.id, text);
+      await Api.enviarMensagem(openChatWith.id, text);
     } catch (err) {
       showToast(err.message || "Não foi possível enviar a mensagem.");
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await Api.logout();
+    } finally {
+      logout();
     }
   }
 
@@ -239,7 +246,7 @@ export function Dashboard() {
           <span className={`ws-status ${connected ? "connected" : ""}`}>
             {connected ? "conectado" : "conectando..."}
           </span>
-          <button className="secondary" onClick={logout}>Sair</button>
+          <button className="secondary" onClick={handleLogout}>Sair</button>
         </div>
       </header>
 
