@@ -62,8 +62,16 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 ### Em desenvolvimento
 - [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
-- [ ] Deploy em ambiente de produção com Docker
-- [ ] Proteção CSRF (hoje desabilitada; como front e back rodam em desenvolvimento como mesma origem via proxy, o risco é baixo, mas isso precisa ser revisto antes de qualquer deploy com domínios separados)
+
+### Preparado para deploy
+- [x] `Dockerfile` multi-stage: builda o frontend, embute o build em `src/main/resources/static` e empacota tudo num único jar/container
+- [x] CI (`.github/workflows/ci.yml`): testes do backend com MySQL real, lint/build do frontend, build da imagem Docker
+- [x] Proteção CSRF via cookie (`XSRF-TOKEN` / header `X-XSRF-TOKEN`), com login/registro isentos por não terem sessão ainda
+- [x] CORS sem wildcard: origens liberadas via `app.cors.allowed-origins`, vazio por padrão em produção (mesma origem)
+- [x] Schema do banco versionado via Flyway (`src/main/resources/db/migration`); `ddl-auto=validate` em vez de `update`
+- [x] CPF marcado como `WRITE_ONLY` (mesmo tratamento da senha) — não é mais devolvido em nenhuma resposta da API
+- [x] Perfil `prod` (`application-prod.properties`): cookie de sessão `secure`, CORS vazio
+- [x] Actuator (`/actuator/health`) para health check da plataforma de deploy
 
 ---
 
