@@ -10,6 +10,7 @@ import com.example.AppStudying.repository.StudySessionRepository;
 import com.example.AppStudying.repository.TopicRepository;
 import com.example.AppStudying.repository.UserRepository;
 import com.example.AppStudying.services.StudySessionService;
+import com.example.AppStudying.services.TimeLineService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,6 +39,9 @@ public class StudySessionServiceTeste {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TimeLineService timeLineService;
 
     @InjectMocks
     private StudySessionService studySessionService;
@@ -81,6 +85,36 @@ public class StudySessionServiceTeste {
         verify(userRepository, times(1)).findById(userId);
         verify(matterRepository, times(1)).findById(matterId);
         verify(topicRepository, times(1)).findById(topicId);
+        verify(studySessionRepository, times(1)).save(any(StudySession.class));
+    }
+
+    @Test
+    void deveIniciarSessaoSemTopico(){
+        Long userId = 1L;
+        Long matterId = 2L;
+
+        User user = new User();
+        user.setId(userId);
+
+        Matter matter = new Matter();
+        matter.setId(matterId);
+
+        StudySession studySession = new StudySession();
+        studySession.setId(10L);
+        studySession.setUser(user);
+        studySession.setMatter(matter);
+        studySession.setInicio(LocalDateTime.now());
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(matterRepository.findById(matterId)).thenReturn(Optional.of(matter));
+        when(studySessionRepository.save(any(StudySession.class))).thenReturn(studySession);
+
+        StudySession resultado = studySessionService.iniciarSessao(userId, matterId, null);
+
+        assertNotNull(resultado);
+        assertNull(resultado.getTopic());
+
+        verify(topicRepository, never()).findById(any());
         verify(studySessionRepository, times(1)).save(any(StudySession.class));
     }
 
@@ -155,9 +189,18 @@ public class StudySessionServiceTeste {
     @Test
     void deveEncerrarSessaoComSucesso(){
         Long sessionId = 10L;
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        Matter matter = new Matter();
+        matter.setNome("Cálculo 1");
 
         StudySession studySession = new StudySession();
         studySession.setId(sessionId);
+        studySession.setUser(user);
+        studySession.setMatter(matter);
         studySession.setInicio(LocalDateTime.now().minusMinutes(30));
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(studySession));
@@ -170,6 +213,7 @@ public class StudySessionServiceTeste {
 
         verify(studySessionRepository, times(1)).findById(sessionId);
         verify(studySessionRepository, times(1)).save(studySession);
+        verify(timeLineService, times(1)).criarEvento(anyString(), eq(userId));
     }
 
     @Test
@@ -298,6 +342,36 @@ public class StudySessionServiceTeste {
         });
 
         verify(studySessionRepository, times(1)).findById(sessionId);
+    }
+
+    @Test
+    void deveEncontrarSessaoAtivaQuandoExiste(){
+        Long userId = 1L;
+        Long matterId = 2L;
+
+        StudySession studySession = new StudySession();
+        studySession.setId(10L);
+
+        when(studySessionRepository.findByUserIdAndMatterIdAndFimIsNull(userId, matterId))
+                .thenReturn(Optional.of(studySession));
+
+        StudySession resultado = studySessionService.buscarSessaoAtiva(userId, matterId);
+
+        assertNotNull(resultado);
+        assertEquals(10L, resultado.getId());
+    }
+
+    @Test
+    void deveRetornarNuloQuandoNaoHaSessaoAtiva(){
+        Long userId = 1L;
+        Long matterId = 2L;
+
+        when(studySessionRepository.findByUserIdAndMatterIdAndFimIsNull(userId, matterId))
+                .thenReturn(Optional.empty());
+
+        StudySession resultado = studySessionService.buscarSessaoAtiva(userId, matterId);
+
+        assertNull(resultado);
     }
 
 }
