@@ -1,0 +1,10 @@
+target/
+frontend/node_modules/
+frontend/dist/
+.git/
+.env
+.env.local
+*.md
+.idea/
+.vscode/
+.mvn/wrapper/maven-wrapper.jar

@@ -46,7 +46,7 @@ export function Dashboard() {
   const [requestError, setRequestError] = useState("");
 
   const [activeSessions, setActiveSessions] = useState({});
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   const [openChatWith, setOpenChatWith] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
