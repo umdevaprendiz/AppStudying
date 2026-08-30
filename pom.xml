@@ -11,20 +11,19 @@
 	<groupId>com.example</groupId>
 	<artifactId>AppStudying</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
+	<name>AppStudying</name>
+	<description>Plataforma de organização de estudos com interação em tempo real entre usuários (Spring Boot + React)</description>
+	<url>https://github.com/umdevaprendiz/AppStudying</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
-	<developers>
-		<developer/>
-	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/umdevaprendiz/AppStudying.git</connection>
+		<developerConnection>scm:git:https://github.com/umdevaprendiz/AppStudying.git</developerConnection>
+		<url>https://github.com/umdevaprendiz/AppStudying</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
