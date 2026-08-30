@@ -30,13 +30,20 @@ public class StudySessionService {
     @Autowired
     private MatterRepository matterRepository;
 
+    @Autowired
+    private TimeLineService timeLineService;
+
     public StudySession iniciarSessao(Long userId, Long matterId, Long topicId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
         Matter matter = matterRepository.findById(matterId)
                 .orElseThrow(() -> new IllegalStateException("Matéria não encontrada!"));
-        Topic topic = topicRepository.findById(topicId)
-                .orElseThrow(() -> new IllegalStateException("Tópico não encontrado!"));
+
+        Topic topic = null;
+        if (topicId != null) {
+            topic = topicRepository.findById(topicId)
+                    .orElseThrow(() -> new IllegalStateException("Tópico não encontrado!"));
+        }
 
         StudySession studySession = new StudySession();
         studySession.setUser(user);
@@ -56,8 +63,21 @@ public class StudySessionService {
         }
         studySession.setFim(LocalDateTime.now());
 
-        return studySessionRepository.save(studySession);
+        StudySession salva = studySessionRepository.save(studySession);
 
+        long minutos = Duration.between(salva.getInicio(), salva.getFim()).toMinutes();
+        String nomeMatter = salva.getMatter() != null ? salva.getMatter().getNome() : "matéria";
+        timeLineService.criarEvento(
+                "Sessão de estudo: " + nomeMatter + " (" + minutos + " min)",
+                salva.getUser().getId()
+        );
+
+        return salva;
+    }
+
+    public StudySession buscarSessaoAtiva(Long userId, Long matterId) {
+        return studySessionRepository.findByUserIdAndMatterIdAndFimIsNull(userId, matterId)
+                .orElse(null);
     }
 
     public Long calcularDuracao(Long sessionId) {
