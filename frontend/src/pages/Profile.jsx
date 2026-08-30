@@ -58,12 +58,12 @@ export function Profile() {
 
   async function openChat() {
     setChatOpen(true);
-    setChatMessages(await Api.listarConversa(user.id, profileId));
+    setChatMessages(await Api.listarConversa(profileId));
   }
 
   async function handleSendMessage(text) {
     try {
-      await Api.enviarMensagem(user.id, profileId, text);
+      await Api.enviarMensagem(profileId, text);
     } catch (err) {
       window.alert(err.message || "Não foi possível enviar a mensagem.");
     }

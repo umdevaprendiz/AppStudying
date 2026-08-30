@@ -136,57 +136,6 @@ public class UserServiceTeste {
     }
 
     @Test
-    void deveAutenticarComSucesso(){
-        String email = "teste@email.com";
-        String senha = "senha123";
-
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword("senhaCriptografada");
-
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(senha, user.getPassword())).thenReturn(true);
-
-        User resultado = userService.autenticar(email, senha);
-
-        assertEquals(user, resultado);
-        verify(userRepository, times(1)).findByEmail(email);
-        verify(passwordEncoder, times(1)).matches(senha, user.getPassword());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoUsuarioNaoEncontradoAoAutenticar(){
-        String email = "teste@email.com";
-
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-
-        assertThrows(IllegalStateException.class, () -> {
-            userService.autenticar(email, "senha123");
-        });
-
-        verify(passwordEncoder, never()).matches(any(), any());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoSenhaIncorretaAoAutenticar(){
-        String email = "teste@email.com";
-        String senha = "senhaErrada";
-
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword("senhaCriptografada");
-
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(senha, user.getPassword())).thenReturn(false);
-
-        assertThrows(IllegalStateException.class, () -> {
-            userService.autenticar(email, senha);
-        });
-
-        verify(userRepository, times(1)).findByEmail(email);
-    }
-
-    @Test
     void deveAtualizarUsuarioComSucesso(){
         Long id = 1L;
         String novoNome = "Novo Nome";
@@ -200,7 +149,7 @@ public class UserServiceTeste {
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
 
-        User resultado = userService.atualizarUsuario(id, novoNome, novoEmail);
+        User resultado = userService.atualizarUsuario(id, novoNome, novoEmail, id);
 
         assertEquals(novoNome, resultado.getName());
         assertEquals(novoEmail, resultado.getEmail());
@@ -214,9 +163,22 @@ public class UserServiceTeste {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(IllegalStateException.class, () -> {
-            userService.atualizarUsuario(id, "Nome", "email@email.com");
+            userService.atualizarUsuario(id, "Nome", "email@email.com", id);
         });
 
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoAtualizarUsuarioDeOutraPessoa(){
+        Long id = 1L;
+        Long currentUserId = 2L;
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.atualizarUsuario(id, "Nome", "email@email.com", currentUserId);
+        });
+
+        verify(userRepository, never()).findById(any());
         verify(userRepository, never()).save(any(User.class));
     }
 

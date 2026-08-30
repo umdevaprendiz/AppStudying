@@ -95,8 +95,12 @@ public class ChatService {
         return conversationRepository.findPorUsuarioEStatus(userId, RequestStatus.ACEITA);
     }
 
-    public Conversation aceitarConversa(Long conversationId) {
+    public Conversation aceitarConversa(Long conversationId, Long currentUserId) {
         Conversation conversation = buscarConversaPorId(conversationId);
+
+        if (!conversation.getReceiver().getId().equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para responder essa conversa!");
+        }
 
         if (conversation.getStatus() != RequestStatus.PENDENTE) {
             throw new IllegalStateException("Essa conversa já foi respondida!");
@@ -108,8 +112,12 @@ public class ChatService {
         return salva;
     }
 
-    public Conversation recusarConversa(Long conversationId) {
+    public Conversation recusarConversa(Long conversationId, Long currentUserId) {
         Conversation conversation = buscarConversaPorId(conversationId);
+
+        if (!conversation.getReceiver().getId().equals(currentUserId)) {
+            throw new IllegalStateException("Você não tem permissão para responder essa conversa!");
+        }
 
         if (conversation.getStatus() != RequestStatus.PENDENTE) {
             throw new IllegalStateException("Essa conversa já foi respondida!");

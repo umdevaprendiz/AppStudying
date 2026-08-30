@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:8080";
+export const API_BASE_URL = "";
 
 export async function request(method, path, { params, body } = {}) {
   let url = `${API_BASE_URL}${path}`;
@@ -10,7 +10,7 @@ export async function request(method, path, { params, body } = {}) {
     if (query) url += `?${query}`;
   }
 
-  const options = { method, headers: {} };
+  const options = { method, headers: {}, credentials: "include" };
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
