@@ -92,7 +92,11 @@ export function Dashboard() {
 
   useEffect(() => {
     async function loadAll() {
-      await Promise.all([loadMatters(), loadReceived(), loadSent(), loadEvents(), loadSuggestions()]);
+      try {
+        await Promise.all([loadMatters(), loadReceived(), loadSent(), loadEvents(), loadSuggestions()]);
+      } catch (err) {
+        showToast(err.message || "Não foi possível carregar todos os dados da página. Tente recarregar.");
+      }
     }
     loadAll();
   }, [loadMatters, loadReceived, loadSent, loadEvents, loadSuggestions]);

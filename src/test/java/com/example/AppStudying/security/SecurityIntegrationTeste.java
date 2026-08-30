@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -85,18 +86,25 @@ public class SecurityIntegrationTeste {
 
         MockCookie sessionCookie = login(user.getEmail(), "senha123");
 
-        // MockMvc não converte exceções não tratadas em resposta HTTP (diferente de um Tomcat real),
-        // então aqui verificamos que a exceção de permissão foi de fato lançada pelo controller.
-        Exception exception = org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () ->
-                mockMvc.perform(get("/api/matters/user/" + outro.getId()).cookie(sessionCookie))
-        );
+        // Com o GlobalExceptionHandler, a IllegalStateException de permissão agora vira
+        // uma resposta HTTP 403 limpa em vez de propagar como exceção não tratada.
+        mockMvc.perform(get("/api/matters/user/" + outro.getId()).cookie(sessionCookie))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("permissão")));
+    }
 
-        Throwable raiz = exception;
-        while (raiz.getCause() != null && raiz.getCause() != raiz) {
-            raiz = raiz.getCause();
-        }
-        org.junit.jupiter.api.Assertions.assertTrue(raiz instanceof IllegalStateException);
-        org.junit.jupiter.api.Assertions.assertTrue(raiz.getMessage().contains("permissão"));
+    @Test
+    void devePermitirAcessarSugestoesAutenticado() throws Exception {
+        User user = criarUsuario("sugestoes.a@teste.com", "90000000001", "senha123");
+        criarUsuario("sugestoes.b@teste.com", "90000000002", "senha123");
+        criarUsuario("sugestoes.c@teste.com", "90000000003", "senha123");
+
+        MockCookie sessionCookie = login(user.getEmail(), "senha123");
+
+        mockMvc.perform(get("/api/users/sugestoes").cookie(sessionCookie))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(user.getEmail()))));
     }
 
     @Test
