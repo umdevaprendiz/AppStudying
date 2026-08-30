@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Api } from "../api/api";
 
 function otherUser(conversation, currentUserId) {
@@ -19,9 +19,10 @@ export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) 
     setConversations(convs);
   }, [currentUserId]);
 
-  useEffect(() => {
-    if (open) loadInbox();
-  }, [open, loadInbox]);
+  function handleOpen() {
+    setOpen(true);
+    loadInbox();
+  }
 
   async function handleAccept(id) {
     await Api.aceitarConversa(id);
@@ -43,7 +44,7 @@ export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) 
       <button
         type="button"
         className="inbox-fab"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         aria-label="Mensagens"
       >
         💬
