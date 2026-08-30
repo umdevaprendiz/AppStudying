@@ -36,6 +36,16 @@ public class UserController {
         return userService.registerUser(user);
     }
 
+    @GetMapping("/verificar-email")
+    public void verificarEmail(@RequestParam String token) {
+        userService.verificarEmail(token);
+    }
+
+    @PostMapping("/reenviar-verificacao")
+    public void reenviarVerificacao(@RequestParam String email) {
+        userService.reenviarVerificacao(email);
+    }
+
     @GetMapping("/buscarUser/{email}")
     public User buscarPorEmail(@PathVariable String email) {
         return userService.buscarPorEmail(email);
