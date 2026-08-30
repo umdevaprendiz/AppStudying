@@ -38,6 +38,10 @@ public class SecurityIntegrationTeste {
         user.setEmail(email);
         user.setCpf(cpf);
         user.setPassword(passwordEncoder.encode(senha));
+        // Esses testes exercitam autorização pós-login, não o fluxo de
+        // verificação de e-mail em si — cria já verificado pra não travar no
+        // DisabledException (ver CustomUserDetails.isEnabled()).
+        user.setVerified(true);
         return userRepository.save(user);
     }
 

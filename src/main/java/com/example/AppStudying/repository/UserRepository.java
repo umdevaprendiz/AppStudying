@@ -14,6 +14,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByCpf(String cpf);
 
-
+    Optional<User> findByVerificationToken(String verificationToken);
 
 }

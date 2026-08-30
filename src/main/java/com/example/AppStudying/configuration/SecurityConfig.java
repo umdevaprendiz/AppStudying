@@ -33,8 +33,8 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/users/registrarUser", "/api/users/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/registrarUser", "/api/users/login", "/api/users/reenviar-verificacao").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/csrf", "/api/users/verificar-email").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // Só a API e o WebSocket exigem autenticação. O resto (o shell do

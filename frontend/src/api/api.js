@@ -8,6 +8,12 @@ export const Api = {
   login(email, senha) {
     return request("POST", "/api/users/login", { params: { email, senha } });
   },
+  verificarEmail(token) {
+    return request("GET", "/api/users/verificar-email", { params: { token } });
+  },
+  reenviarVerificacao(email) {
+    return request("POST", "/api/users/reenviar-verificacao", { params: { email } });
+  },
   logout() {
     return request("POST", "/api/users/logout");
   },

@@ -2,6 +2,7 @@ package com.example.AppStudying.UserServiceTeste;
 
 import com.example.AppStudying.model.User;
 import com.example.AppStudying.repository.UserRepository;
+import com.example.AppStudying.services.EmailService;
 import com.example.AppStudying.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ public class UserServiceTeste {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EmailService emailService;
 
     @Test
     void deveRegistrarUsuarioComSucesso(){
