@@ -1,5 +1,6 @@
 package com.example.AppStudying.controllers;
 
+import com.example.AppStudying.dto.MatterStudySummaryDTO;
 import com.example.AppStudying.model.StudySession;
 import com.example.AppStudying.services.StudySessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +45,10 @@ public class StudySessionController {
     @GetMapping("/{id}/duracao")
     public Long calcularDuracao(@PathVariable Long id) {
         return studySessionService.calcularDuracao(id);
+    }
+
+    @GetMapping("/resumo/{userId}")
+    public List<MatterStudySummaryDTO> resumoPorUsuario(@PathVariable Long userId) {
+        return studySessionService.resumoPorUsuario(userId);
     }
 }

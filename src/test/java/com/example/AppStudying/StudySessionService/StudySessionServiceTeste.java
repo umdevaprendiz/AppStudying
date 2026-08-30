@@ -374,5 +374,38 @@ public class StudySessionServiceTeste {
         assertNull(resultado);
     }
 
+    @Test
+    void deveAgruparResumoPorMateriaSomandoDuracao(){
+        Long userId = 1L;
+
+        Matter calculo = new Matter();
+        calculo.setNome("Cálculo 1");
+
+        LocalDateTime agora = LocalDateTime.now();
+
+        StudySession sessao1 = new StudySession();
+        sessao1.setMatter(calculo);
+        sessao1.setInicio(agora.minusMinutes(30));
+        sessao1.setFim(agora);
+
+        StudySession sessao2 = new StudySession();
+        sessao2.setMatter(calculo);
+        sessao2.setInicio(agora.minusMinutes(20));
+        sessao2.setFim(agora);
+
+        StudySession sessaoEmAndamento = new StudySession();
+        sessaoEmAndamento.setMatter(calculo);
+        sessaoEmAndamento.setInicio(agora);
+
+        when(studySessionRepository.findByUserId(userId)).thenReturn(List.of(sessao1, sessao2, sessaoEmAndamento));
+
+        var resultado = studySessionService.resumoPorUsuario(userId);
+
+        assertEquals(1, resultado.size());
+        assertEquals("Cálculo 1", resultado.get(0).getMatterName());
+        assertEquals(50, resultado.get(0).getTotalMinutes());
+        assertEquals(2, resultado.get(0).getTotalSessions());
+    }
+
 }
 

@@ -17,6 +17,9 @@ export const Api = {
   atualizarUsuario(id, novoNome, email) {
     return request("PUT", `/api/users/${id}`, { params: { novoNome, email } });
   },
+  listarSugestoes(userId, limite = 10) {
+    return request("GET", "/api/users/sugestoes", { params: { userId, limite } });
+  },
 
   // Matters
   criarMatter(nome, userId) {
@@ -75,6 +78,9 @@ export const Api = {
   listarSessoesPorUsuario(userId) {
     return request("GET", `/api/study-sessions/usuario/${userId}`);
   },
+  buscarResumoEstudos(userId) {
+    return request("GET", `/api/study-sessions/resumo/${userId}`);
+  },
 
   // Chat
   enviarMensagem(senderId, receiverId, content) {
@@ -82,5 +88,20 @@ export const Api = {
   },
   listarConversa(userId1, userId2) {
     return request("GET", "/api/chat/conversa", { params: { userId1, userId2 } });
+  },
+  listarSolicitacoesMensagem(userId) {
+    return request("GET", `/api/chat/solicitacoes/${userId}`);
+  },
+  listarConversasAceitas(userId) {
+    return request("GET", `/api/chat/conversas/${userId}`);
+  },
+  aceitarConversa(id) {
+    return request("PUT", `/api/chat/conversas/${id}/aceitar`);
+  },
+  recusarConversa(id) {
+    return request("PUT", `/api/chat/conversas/${id}/recusar`);
+  },
+  contarMensagensNaoLidas(userId) {
+    return request("GET", `/api/chat/contagem/${userId}`);
   },
 };

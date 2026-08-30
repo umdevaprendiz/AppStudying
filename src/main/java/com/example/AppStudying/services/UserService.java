@@ -6,6 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -48,6 +52,17 @@ public class UserService {
             }
 
             return user;
+        }
+
+        public List<User> listarSugestoes(Long userId, int limite){
+        List<User> candidatos = new ArrayList<>(userRepository.findAll());
+        candidatos.removeIf(u -> u.getId().equals(userId));
+        Collections.shuffle(candidatos);
+
+        if (candidatos.size() > limite) {
+            return candidatos.subList(0, limite);
+        }
+        return candidatos;
         }
 
         public User atualizarUsuario(Long id, String novoNome, String novoEmail){

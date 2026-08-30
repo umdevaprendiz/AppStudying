@@ -20,6 +20,10 @@ public class ChatMessage {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation;
+
+    @ManyToOne
     @JoinColumn(name = "sender_id")
     private User sender;
 
@@ -32,4 +36,7 @@ public class ChatMessage {
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
+
+    @Column(name = "is_read")
+    private boolean read;
 }

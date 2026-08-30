@@ -39,3 +39,18 @@ export function connectChatSocket(userId, { onMessage, onStatusChange }) {
   client.activate();
   return client;
 }
+
+export function connectInboxSocket(userId, { onCount }) {
+  const client = new Client({
+    webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+    reconnectDelay: 5000,
+    onConnect: () => {
+      client.subscribe(`/topic/chat-inbox/${userId}`, (message) => {
+        onCount(Number(JSON.parse(message.body)));
+      });
+    },
+  });
+
+  client.activate();
+  return client;
+}

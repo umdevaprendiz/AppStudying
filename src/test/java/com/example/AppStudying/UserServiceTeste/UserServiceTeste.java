@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -237,6 +238,50 @@ public class UserServiceTeste {
 
         assertEquals("novaSenhaCriptografada", user.getPassword());
         verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void deveListarSugestoesExcluindoUsuarioAtual(){
+        Long userId = 1L;
+
+        User self = new User();
+        self.setId(userId);
+
+        User outro1 = new User();
+        outro1.setId(2L);
+
+        User outro2 = new User();
+        outro2.setId(3L);
+
+        when(userRepository.findAll()).thenReturn(List.of(self, outro1, outro2));
+
+        List<User> resultado = userService.listarSugestoes(userId, 10);
+
+        assertEquals(2, resultado.size());
+        assertFalse(resultado.stream().anyMatch(u -> u.getId().equals(userId)));
+    }
+
+    @Test
+    void deveLimitarSugestoesAoLimiteInformado(){
+        Long userId = 1L;
+
+        User self = new User();
+        self.setId(userId);
+
+        User outro1 = new User();
+        outro1.setId(2L);
+
+        User outro2 = new User();
+        outro2.setId(3L);
+
+        User outro3 = new User();
+        outro3.setId(4L);
+
+        when(userRepository.findAll()).thenReturn(List.of(self, outro1, outro2, outro3));
+
+        List<User> resultado = userService.listarSugestoes(userId, 2);
+
+        assertEquals(2, resultado.size());
     }
 
     @Test
