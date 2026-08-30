@@ -2,16 +2,17 @@
 
 > Plataforma de organização de estudos com interação em tempo real entre usuários.
 
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![Status](https://img.shields.io/badge/status-ativo-brightgreen)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen)
 ![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
 
 ## 🚧 Status do projeto
 
-**Este projeto está em desenvolvimento ativo.** Funcionalidades, estrutura de pastas e endpoints ainda estão sendo implementados e podem mudar sem aviso prévio. Não recomendado para uso em produção neste momento.
+Em desenvolvimento ativo — a base (autenticação, autorização, tempo real, testes automatizados) está completa e o projeto já tem pipeline de deploy funcional (Docker, CI, migrations versionadas). O que falta é uma funcionalidade pontual (CRUD de tópicos, ver abaixo) e o primeiro deploy real em produção.
 
 ---
 
@@ -75,6 +76,34 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 ---
 
+## 🚀 Como rodar localmente
+
+```bash
+git clone https://github.com/umdevaprendiz/AppStudying.git
+cd AppStudying
+cp .env.example .env   # preencha com suas próprias credenciais locais
+```
+
+**Opção 1 — tudo em Docker:**
+```bash
+docker compose up -d          # sobe o MySQL
+docker build -t appstudying . && docker run --env-file .env -p 8080:8080 appstudying
+```
+
+**Opção 2 — backend e frontend separados (hot reload):**
+```bash
+docker compose up -d          # sobe só o MySQL
+./mvnw spring-boot:run        # backend em :8080
+
+cd frontend
+npm install
+npm run dev                   # frontend em :5173, com proxy pro backend
+```
+
+A API fica documentada em `http://localhost:8080/swagger-ui.html`.
+
+---
+
 ## 🖼️ Screenshots
 
 > Documentação interativa da API via Swagger UI, rodando em `http://localhost:8080/swagger-ui.html`.
@@ -105,29 +134,40 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 ## 🏗️ Estrutura do projeto
 
-> ⚠️ Como o projeto está em desenvolvimento, algumas etapas podem mudar.
-
 ```
 AppStudying/
 ├── src/main/java/com/example/AppStudying/
 │   ├── AppStudyingApplication.java
-│   ├── configuration/        # SecurityConfig, WebConfig (CORS), DotenvEnvironmentPostProcessor
+│   ├── configuration/        # SecurityConfig, WebConfig (CORS), FlywayConfig,
+│   │                         # DotenvEnvironmentPostProcessor
 │   ├── webSocketConfig/      # Configuração do broker STOMP (/topic, /app, endpoint /ws)
 │   ├── controllers/          # UserController, MatterController, StudyRequestController,
-│   │                         # StudySessionController, ChatController, TimeLineController
+│   │                         # StudySessionController, ChatController, TimeLineController,
+│   │                         # CsrfController, SpaForwardController
 │   ├── services/             # Regras de negócio de cada domínio
 │   ├── repository/           # Interfaces JpaRepository
 │   ├── model/                # User, Matter, Topic, StudySession, StudyRequest,
 │   │                         # Conversation, ChatMessage, TimeLine
 │   ├── enums/                # RequestStatus, TypeStatus
 │   └── dto/                  # MatterStudySummaryDTO, etc.
-├── src/test/java/...         # Testes unitários (JUnit 5 + Mockito), um pacote por service
+├── src/main/resources/
+│   ├── application.properties, application-prod.properties
+│   └── db/migration/         # Migrations versionadas (Flyway)
+├── src/test/java/...         # Testes unitários e de integração (JUnit 5 + Mockito + MockMvc)
 ├── frontend/
 │   └── src/
-│       ├── api/              # http.js (fetch wrapper), api.js (chamadas REST), ws.js (WebSocket)
+│       ├── api/              # http.js (fetch wrapper + CSRF), api.js (chamadas REST), ws.js (WebSocket)
 │       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer
 │       ├── context/          # AuthContext (usuário logado via localStorage)
 │       └── pages/            # Login, Register, Dashboard, Profile
-├── compose.yaml               # Serviço MySQL com volume nomeado
-└── .env                        # Credenciais locais (fora do controle de versão)
+├── .github/workflows/ci.yml  # CI: testes com MySQL real, lint/build do frontend, build da imagem
+├── Dockerfile                 # Build multi-stage: frontend + backend num único container
+├── compose.yaml               # Serviço MySQL com volume nomeado (uso local/CI)
+└── .env.example                # Template de variáveis de ambiente (copie para .env)
 ```
+
+---
+
+## 📄 Licença
+
+Distribuído sob a licença MIT — veja [LICENSE](LICENSE) para mais detalhes.
