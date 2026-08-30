@@ -9,18 +9,30 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const [reenvioStatus, setReenvioStatus] = useState("");
 
   if (user) return <Navigate to="/dashboard" replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setReenvioStatus("");
     try {
       const loggedUser = await Api.login(email, senha);
       login(loggedUser);
       navigate("/dashboard");
-    } catch {
-      setError("Não foi possível entrar. Verifique e-mail e senha.");
+    } catch (err) {
+      setError(err.message || "Não foi possível entrar. Verifique e-mail e senha.");
+    }
+  }
+
+  async function handleReenviar() {
+    setReenvioStatus("");
+    try {
+      await Api.reenviarVerificacao(email);
+      setReenvioStatus("E-mail de verificação reenviado. Confira sua caixa de entrada.");
+    } catch (err) {
+      setReenvioStatus(err.message || "Não foi possível reenviar o e-mail.");
     }
   }
 
@@ -37,6 +49,15 @@ export function Login() {
 
         <button type="submit" className="full-width">Entrar</button>
         <div className="error-msg">{error}</div>
+
+        {error.includes("Confirme seu e-mail") && (
+          <div className="hint">
+            <button type="button" className="secondary" onClick={handleReenviar}>
+              Reenviar e-mail de verificação
+            </button>
+            {reenvioStatus && <p>{reenvioStatus}</p>}
+          </div>
+        )}
 
         <p className="hint">Não tem conta? <Link to="/register">Cadastre-se</Link></p>
       </form>

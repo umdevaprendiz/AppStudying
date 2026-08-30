@@ -39,4 +39,9 @@ public class CustomUserDetails implements UserDetails, Serializable {
     public String getUsername() {
         return user.getEmail();
     }
+
+    @Override
+    public boolean isEnabled() {
+        return Boolean.TRUE.equals(user.getVerified());
+    }
 }
