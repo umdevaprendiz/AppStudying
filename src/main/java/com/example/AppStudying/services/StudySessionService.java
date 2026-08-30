@@ -1,5 +1,6 @@
 package com.example.AppStudying.services;
 
+import com.example.AppStudying.dto.MatterStudySummaryDTO;
 import com.example.AppStudying.model.Matter;
 import com.example.AppStudying.model.StudySession;
 import com.example.AppStudying.model.Topic;
@@ -13,7 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StudySessionService {
@@ -78,6 +82,27 @@ public class StudySessionService {
     public StudySession buscarSessaoAtiva(Long userId, Long matterId) {
         return studySessionRepository.findByUserIdAndMatterIdAndFimIsNull(userId, matterId)
                 .orElse(null);
+    }
+
+    public List<MatterStudySummaryDTO> resumoPorUsuario(Long userId) {
+        Map<String, MatterStudySummaryDTO> resumoPorMateria = new LinkedHashMap<>();
+
+        for (StudySession sessao : studySessionRepository.findByUserId(userId)) {
+            if (sessao.getFim() == null || sessao.getMatter() == null) {
+                continue;
+            }
+
+            String nomeMatter = sessao.getMatter().getNome();
+            long minutos = Duration.between(sessao.getInicio(), sessao.getFim()).toMinutes();
+
+            MatterStudySummaryDTO resumo = resumoPorMateria.computeIfAbsent(
+                    nomeMatter, nome -> new MatterStudySummaryDTO(nome, 0, 0));
+
+            resumo.setTotalMinutes(resumo.getTotalMinutes() + minutos);
+            resumo.setTotalSessions(resumo.getTotalSessions() + 1);
+        }
+
+        return new ArrayList<>(resumoPorMateria.values());
     }
 
     public Long calcularDuracao(Long sessionId) {

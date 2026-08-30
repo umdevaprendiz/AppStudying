@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Api } from "../api/api";
-import { connectStudyRequestSocket, connectChatSocket } from "../api/ws";
+import { connectStudyRequestSocket, connectChatSocket, connectInboxSocket } from "../api/ws";
 import { useAuth } from "../context/auth-context";
 import { ChatModal } from "../components/ChatModal";
+import { InboxDrawer } from "../components/InboxDrawer";
 
 function notificationText(studyRequest) {
   if (studyRequest.status === "PENDENTE") {
@@ -27,6 +29,7 @@ function formatElapsed(inicioISO, nowMs) {
 
 export function Dashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [connected, setConnected] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -34,6 +37,8 @@ export function Dashboard() {
   const [received, setReceived] = useState([]);
   const [sent, setSent] = useState([]);
   const [events, setEvents] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [matterName, setMatterName] = useState("");
   const [eventDescription, setEventDescription] = useState("");
@@ -75,6 +80,10 @@ export function Dashboard() {
     setEvents(await Api.listarEventosPorUsuario(user.id));
   }, [user.id]);
 
+  const loadSuggestions = useCallback(async () => {
+    setSuggestions(await Api.listarSugestoes(user.id, 10));
+  }, [user.id]);
+
   function showToast(text) {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, text }]);
@@ -83,10 +92,19 @@ export function Dashboard() {
 
   useEffect(() => {
     async function loadAll() {
-      await Promise.all([loadMatters(), loadReceived(), loadSent(), loadEvents()]);
+      await Promise.all([loadMatters(), loadReceived(), loadSent(), loadEvents(), loadSuggestions()]);
     }
     loadAll();
-  }, [loadMatters, loadReceived, loadSent, loadEvents]);
+  }, [loadMatters, loadReceived, loadSent, loadEvents, loadSuggestions]);
+
+  useEffect(() => {
+    Api.contarMensagensNaoLidas(user.id).then(setUnreadCount);
+  }, [user.id]);
+
+  useEffect(() => {
+    const client = connectInboxSocket(user.id, { onCount: setUnreadCount });
+    return () => client.deactivate();
+  }, [user.id]);
 
   useEffect(() => {
     const client = connectStudyRequestSocket(user.id, {
@@ -199,7 +217,11 @@ export function Dashboard() {
 
   async function handleSendMessage(text) {
     if (!openChatWith) return;
-    await Api.enviarMensagem(user.id, openChatWith.id, text);
+    try {
+      await Api.enviarMensagem(user.id, openChatWith.id, text);
+    } catch (err) {
+      showToast(err.message || "Não foi possível enviar a mensagem.");
+    }
   }
 
   return (
@@ -253,6 +275,24 @@ export function Dashboard() {
               );
             })}
           </ul>
+        </section>
+
+        <section className="panel wide">
+          <h2>Pessoas para conhecer</h2>
+          <div className="people-grid">
+            {suggestions.length === 0 && <div className="empty">Nenhuma sugestão por enquanto.</div>}
+            {suggestions.map((s) => (
+              <button
+                type="button"
+                key={s.id}
+                className="people-card"
+                onClick={() => navigate(`/profile/${s.id}`)}
+              >
+                <span className="people-avatar">{s.name?.[0]?.toUpperCase() ?? "?"}</span>
+                <span>{s.name}</span>
+              </button>
+            ))}
+          </div>
         </section>
 
         <section className="panel">
@@ -374,6 +414,12 @@ export function Dashboard() {
         messages={chatMessages}
         onClose={closeChat}
         onSend={handleSendMessage}
+      />
+
+      <InboxDrawer
+        currentUserId={user.id}
+        unreadCount={unreadCount}
+        onOpenConversation={openChat}
       />
     </>
   );

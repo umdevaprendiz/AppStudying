@@ -1,5 +1,6 @@
 package com.example.AppStudying.model;
 
+import com.example.AppStudying.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,30 +14,26 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-public class ChatMessage {
+public class Conversation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "conversation_id")
-    private Conversation conversation;
-
-    @ManyToOne
-    @JoinColumn(name = "sender_id")
-    private User sender;
+    @JoinColumn(name = "requester_id")
+    private User requester;
 
     @ManyToOne
     @JoinColumn(name = "receiver_id")
     private User receiver;
 
-    @Column(name = "content", length = 2000)
-    private String content;
+    @Enumerated(EnumType.STRING)
+    private RequestStatus status;
 
-    @Column(name = "sent_at")
-    private LocalDateTime sentAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "is_read")
-    private boolean read;
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
 }
