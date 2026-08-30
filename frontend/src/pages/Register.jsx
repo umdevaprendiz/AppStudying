@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Api } from "../api/api";
 import { useAuth } from "../context/auth-context";
 
 export function Register() {
-  const { user, login } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", cpf: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [cadastrado, setCadastrado] = useState(false);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -19,12 +19,24 @@ export function Register() {
     e.preventDefault();
     setError("");
     try {
-      const createdUser = await Api.registrarUser(form);
-      login(createdUser);
-      navigate("/dashboard");
+      await Api.registrarUser(form);
+      setCadastrado(true);
     } catch (err) {
       setError(err.message || "Não foi possível concluir o cadastro.");
     }
+  }
+
+  if (cadastrado) {
+    return (
+      <div className="auth-wrapper">
+        <div className="card">
+          <h1>Quase lá!</h1>
+          <p>Enviamos um e-mail de confirmação para <strong>{form.email}</strong>.</p>
+          <p className="hint">Clique no link recebido pra ativar sua conta e poder entrar.</p>
+          <Link to="/login" className="full-width">Ir para o login</Link>
+        </div>
+      </div>
+    );
   }
 
   return (
