@@ -43,6 +43,11 @@ jobs:
           # Já existe um MySQL real subido pelo "services:" acima; não deixa o
           # spring-boot-docker-compose tentar subir outro a partir do compose.yaml.
           SPRING_DOCKER_COMPOSE_ENABLED: false
+          # Nenhum teste envia e-mail de verdade (SecurityIntegrationTeste cria
+          # usuário direto no repositório, sem passar por UserService), mas o
+          # Spring precisa resolver esses placeholders pra montar o contexto.
+          MAIL_USERNAME: ci@example.com
+          MAIL_PASSWORD: dummy-password-for-ci
 
   frontend-lint:
     runs-on: ubuntu-latest
