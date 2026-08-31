@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Api } from "../api/api";
 
@@ -7,9 +7,14 @@ export function VerifyEmail() {
   const token = searchParams.get("token");
   const [status, setStatus] = useState(() => (token ? "verificando" : "erro"));
   const [error, setError] = useState(() => (token ? "" : "Link inválido: token não informado."));
+  // O React.StrictMode (só em dev) roda o efeito duas vezes de propósito; sem
+  // essa guarda, a segunda chamada usaria um token já consumido pela primeira
+  // e mostraria "inválido" por cima de uma verificação que já deu certo.
+  const chamouRef = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || chamouRef.current) return;
+    chamouRef.current = true;
     Api.verificarEmail(token)
       .then(() => setStatus("sucesso"))
       .catch((err) => {
