@@ -70,7 +70,7 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] Proteção CSRF via cookie (`XSRF-TOKEN` / header `X-XSRF-TOKEN`), com login/registro isentos por não terem sessão ainda
 - [x] CORS sem wildcard: origens liberadas via `app.cors.allowed-origins`, vazio por padrão em produção (mesma origem)
 - [x] Schema do banco versionado via Flyway (`src/main/resources/db/migration`); `ddl-auto=validate` em vez de `update`
-- [x] CPF marcado como `WRITE_ONLY` (mesmo tratamento da senha) — não é mais devolvido em nenhuma resposta da API
+- [x] Cadastro coleta apenas nome, e-mail e senha — nenhum dado sensível como CPF é armazenado
 - [x] Perfil `prod` (`application-prod.properties`): cookie de sessão `secure`, CORS vazio
 - [x] Actuator (`/actuator/health`) para health check da plataforma de deploy
 
