@@ -2,15 +2,18 @@ package com.example.AppStudying.UserServiceTeste;
 
 import com.example.AppStudying.model.User;
 import com.example.AppStudying.repository.UserRepository;
+import com.example.AppStudying.security.RateLimiterService;
 import com.example.AppStudying.services.EmailService;
 import com.example.AppStudying.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +34,12 @@ public class UserServiceTeste {
 
     @Mock
     private EmailService emailService;
+
+    // Spy (instância real, não mock puro): queremos o comportamento genuíno
+    // de janela deslizante pra testar o limite de reenvio de verdade, não
+    // simular a resposta.
+    @Spy
+    private RateLimiterService rateLimiter = new RateLimiterService();
 
     @Test
     void deveRegistrarUsuarioComSucesso(){
@@ -265,6 +274,125 @@ public class UserServiceTeste {
         assertThrows(IllegalStateException.class, () -> {
             userService.alterarSenha(id, senhaAtual, "novaSenha");
         });
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void deveReenviarVerificacaoComSucesso(){
+        String email = "naoverificado@email.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setVerified(false);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.reenviarVerificacao(email);
+
+        assertNotNull(user.getVerificationToken());
+        verify(userRepository, times(1)).save(user);
+        verify(emailService, times(1)).enviarEmailVerificacao(eq(email), anyString());
+    }
+
+    @Test
+    void deveLancarExcecaoAoReenviarParaUsuarioJaVerificado(){
+        String email = "verificado@email.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setVerified(true);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.reenviarVerificacao(email);
+        });
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(emailService, never()).enviarEmailVerificacao(any(), any());
+    }
+
+    @Test
+    void deveLancarExcecaoAoExcederLimiteDeReenvio(){
+        String email = "spam@email.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setVerified(false);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        // As 3 primeiras tentativas (o limite) devem passar sem erro.
+        userService.reenviarVerificacao(email);
+        userService.reenviarVerificacao(email);
+        userService.reenviarVerificacao(email);
+
+        // A 4ª, dentro da mesma janela de tempo, deve ser bloqueada.
+        assertThrows(IllegalStateException.class, () -> {
+            userService.reenviarVerificacao(email);
+        });
+
+        verify(emailService, times(3)).enviarEmailVerificacao(any(), any());
+    }
+
+    @Test
+    void deveVerificarEmailComSucesso(){
+        String token = "token-valido";
+        User user = new User();
+        user.setVerified(false);
+        user.setVerificationToken(token);
+        user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(1));
+
+        when(userRepository.findByVerificationToken(token)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.verificarEmail(token);
+
+        assertTrue(user.getVerified());
+        assertNull(user.getVerificationToken());
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void deveLancarExcecaoAoVerificarTokenInvalido(){
+        String token = "token-inexistente";
+
+        when(userRepository.findByVerificationToken(token)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.verificarEmail(token);
+        });
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoVerificarTokenExpirado(){
+        String token = "token-expirado";
+        User user = new User();
+        user.setVerified(false);
+        user.setVerificationToken(token);
+        user.setVerificationTokenExpiry(LocalDateTime.now().minusMinutes(1));
+
+        when(userRepository.findByVerificationToken(token)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.verificarEmail(token);
+        });
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void deveIgnorarVerificacaoDeEmailJaVerificado(){
+        String token = "token-de-conta-ja-verificada";
+        User user = new User();
+        user.setVerified(true);
+        user.setVerificationToken(token);
+
+        when(userRepository.findByVerificationToken(token)).thenReturn(Optional.of(user));
+
+        userService.verificarEmail(token);
 
         verify(userRepository, never()).save(any(User.class));
     }

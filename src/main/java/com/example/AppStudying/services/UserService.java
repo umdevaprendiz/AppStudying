@@ -2,11 +2,13 @@ package com.example.AppStudying.services;
 
 import com.example.AppStudying.model.User;
 import com.example.AppStudying.repository.UserRepository;
+import com.example.AppStudying.security.RateLimiterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +19,8 @@ import java.util.UUID;
 public class UserService {
 
     private static final int VERIFICATION_TOKEN_VALID_HOURS = 24;
+    private static final int REENVIO_MAX_TENTATIVAS = 3;
+    private static final Duration REENVIO_JANELA = Duration.ofHours(1);
 
     @Autowired
     private UserRepository userRepository;
@@ -24,6 +28,8 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private RateLimiterService rateLimiter;
 
     // Se o envio do e-mail falhar (SMTP fora do ar, credencial errada), o
     // insert do usuário e a geração do token são desfeitos junto — melhor o
@@ -76,6 +82,13 @@ public class UserService {
 
         @Transactional
         public void reenviarVerificacao(String email) {
+        // Verifica o limite antes de tocar no banco: sem isso, esse endpoint
+        // público (sem login) podia ser chamado sem limite pra spammar a
+        // caixa de entrada de alguém ou estourar a cota de e-mails da conta.
+        if (!rateLimiter.permitir("reenviar-verificacao:" + email.toLowerCase(), REENVIO_MAX_TENTATIVAS, REENVIO_JANELA)) {
+            throw new IllegalStateException("Muitas tentativas de reenvio. Aguarde um pouco antes de tentar de novo.");
+        }
+
         User user = buscarPorEmail(email);
 
         if (Boolean.TRUE.equals(user.getVerified())) {
