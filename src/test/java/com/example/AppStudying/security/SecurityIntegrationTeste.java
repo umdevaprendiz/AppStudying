@@ -32,11 +32,10 @@ public class SecurityIntegrationTeste {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private User criarUsuario(String email, String cpf, String senha) {
+    private User criarUsuario(String email, String senha) {
         User user = new User();
         user.setName("Usuário Teste");
         user.setEmail(email);
-        user.setCpf(cpf);
         user.setPassword(passwordEncoder.encode(senha));
         // Esses testes exercitam autorização pós-login, não o fluxo de
         // verificação de e-mail em si — cria já verificado pra não travar no
@@ -65,7 +64,7 @@ public class SecurityIntegrationTeste {
 
     @Test
     void deveRejeitarLoginComSenhaErrada() throws Exception {
-        User user = criarUsuario("seguranca.senha@teste.com", "10000000001", "senha123");
+        User user = criarUsuario("seguranca.senha@teste.com", "senha123");
 
         mockMvc.perform(post("/api/users/login")
                         .param("email", user.getEmail())
@@ -75,7 +74,7 @@ public class SecurityIntegrationTeste {
 
     @Test
     void devePermitirLoginEAcessarOProprioRecurso() throws Exception {
-        User user = criarUsuario("seguranca.proprio@teste.com", "10000000002", "senha123");
+        User user = criarUsuario("seguranca.proprio@teste.com", "senha123");
 
         MockCookie sessionCookie = login(user.getEmail(), "senha123");
 
@@ -85,8 +84,8 @@ public class SecurityIntegrationTeste {
 
     @Test
     void deveBloquearAcessoAoRecursoDeOutroUsuario() throws Exception {
-        User user = criarUsuario("seguranca.a@teste.com", "10000000003", "senha123");
-        User outro = criarUsuario("seguranca.b@teste.com", "10000000004", "senha123");
+        User user = criarUsuario("seguranca.a@teste.com", "senha123");
+        User outro = criarUsuario("seguranca.b@teste.com", "senha123");
 
         MockCookie sessionCookie = login(user.getEmail(), "senha123");
 
@@ -99,9 +98,9 @@ public class SecurityIntegrationTeste {
 
     @Test
     void devePermitirAcessarSugestoesAutenticado() throws Exception {
-        User user = criarUsuario("sugestoes.a@teste.com", "90000000001", "senha123");
-        criarUsuario("sugestoes.b@teste.com", "90000000002", "senha123");
-        criarUsuario("sugestoes.c@teste.com", "90000000003", "senha123");
+        User user = criarUsuario("sugestoes.a@teste.com", "senha123");
+        criarUsuario("sugestoes.b@teste.com", "senha123");
+        criarUsuario("sugestoes.c@teste.com", "senha123");
 
         MockCookie sessionCookie = login(user.getEmail(), "senha123");
 
@@ -113,7 +112,7 @@ public class SecurityIntegrationTeste {
 
     @Test
     void naoDeveExporSenhaNaRespostaDoLogin() throws Exception {
-        User user = criarUsuario("seguranca.senhaoculta@teste.com", "10000000005", "senha123");
+        User user = criarUsuario("seguranca.senhaoculta@teste.com", "senha123");
 
         mockMvc.perform(post("/api/users/login")
                         .param("email", user.getEmail())

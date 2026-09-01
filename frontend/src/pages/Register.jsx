@@ -5,7 +5,7 @@ import { useAuth } from "../context/auth-context";
 
 export function Register() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: "", cpf: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [cadastrado, setCadastrado] = useState(false);
 
@@ -46,9 +46,6 @@ export function Register() {
 
         <label htmlFor="name">Nome</label>
         <input id="name" type="text" value={form.name} onChange={updateField("name")} required />
-
-        <label htmlFor="cpf">CPF</label>
-        <input id="cpf" type="text" value={form.cpf} onChange={updateField("cpf")} required />
 
         <label htmlFor="email">E-mail</label>
         <input id="email" type="email" value={form.email} onChange={updateField("email")} required />

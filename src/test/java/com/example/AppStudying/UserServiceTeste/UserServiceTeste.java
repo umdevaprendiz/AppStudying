@@ -45,11 +45,9 @@ public class UserServiceTeste {
     void deveRegistrarUsuarioComSucesso(){
         User user = new User();
         user.setEmail("teste@email.com");
-        user.setCpf("12345678900");
         user.setPassword("senha123");
 
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
-        when(userRepository.existsByCpf(user.getCpf())).thenReturn(false);
         when(passwordEncoder.encode("senha123")).thenReturn("senhaCriptografada");
         when(userRepository.save(user)).thenReturn(user);
 
@@ -59,7 +57,6 @@ public class UserServiceTeste {
         assertEquals("senhaCriptografada", resultado.getPassword());
 
         verify(userRepository, times(1)).existsByEmail(user.getEmail());
-        verify(userRepository, times(1)).existsByCpf(user.getCpf());
         verify(userRepository, times(1)).save(user);
     }
 
@@ -69,23 +66,6 @@ public class UserServiceTeste {
         user.setEmail("teste@email.com");
 
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
-
-        assertThrows(IllegalStateException.class, () -> {
-            userService.registerUser(user);
-        });
-
-        verify(userRepository, never()).existsByCpf(any());
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoCpfJaCadastrado(){
-        User user = new User();
-        user.setEmail("teste@email.com");
-        user.setCpf("12345678900");
-
-        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
-        when(userRepository.existsByCpf(user.getCpf())).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> {
             userService.registerUser(user);

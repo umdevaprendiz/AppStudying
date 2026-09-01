@@ -44,10 +44,6 @@ public class UserService {
             throw new IllegalStateException("Email já está cadastrado!");
         }
 
-        if (userRepository.existsByCpf(user.getCpf())) {
-            throw new IllegalStateException("Cpf já está cadastrado!");
-        }
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         // Nunca confia em "verified" vindo do cliente: toda conta nova começa
