@@ -46,8 +46,8 @@ jobs:
           # Nenhum teste envia e-mail de verdade (SecurityIntegrationTeste cria
           # usuário direto no repositório, sem passar por UserService), mas o
           # Spring precisa resolver esses placeholders pra montar o contexto.
-          MAIL_USERNAME: ci@example.com
-          MAIL_PASSWORD: dummy-password-for-ci
+          BREVO_API_KEY: dummy-key-for-ci
+          BREVO_SENDER_EMAIL: ci@example.com
 
   frontend-lint:
     runs-on: ubuntu-latest
