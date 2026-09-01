@@ -5,6 +5,7 @@ import { connectStudyRequestSocket, connectChatSocket, connectInboxSocket } from
 import { useAuth } from "../context/auth-context";
 import { ChatModal } from "../components/ChatModal";
 import { InboxDrawer } from "../components/InboxDrawer";
+import { MatterTopics } from "../components/MatterTopics";
 
 function notificationText(studyRequest) {
   if (studyRequest.status === "PENDENTE") {
@@ -47,6 +48,7 @@ export function Dashboard() {
 
   const [activeSessions, setActiveSessions] = useState({});
   const [now, setNow] = useState(() => Date.now());
+  const [expandedMatterId, setExpandedMatterId] = useState(null);
 
   const [openChatWith, setOpenChatWith] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -271,17 +273,27 @@ export function Dashboard() {
             {matters.length === 0 && <li className="empty">Nada por aqui ainda.</li>}
             {matters.map((m) => {
               const active = activeSessions[m.id];
+              const expanded = expandedMatterId === m.id;
               return (
-                <li key={m.id}>
+                <li key={m.id} className="matter-item">
                   <div className="item-main"><strong>{m.nome}</strong></div>
-                  {active ? (
-                    <div className="actions">
-                      <span className="timer-display">{formatElapsed(active.inicio, now)}</span>
-                      <button className="danger" onClick={() => handleStopTimer(m.id)}>Parar</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => handleStartTimer(m.id)}>Iniciar cronômetro</button>
-                  )}
+                  <div className="actions">
+                    {active ? (
+                      <>
+                        <span className="timer-display">{formatElapsed(active.inicio, now)}</span>
+                        <button className="danger" onClick={() => handleStopTimer(m.id)}>Parar</button>
+                      </>
+                    ) : (
+                      <button onClick={() => handleStartTimer(m.id)}>Iniciar cronômetro</button>
+                    )}
+                    <button
+                      className="secondary"
+                      onClick={() => setExpandedMatterId(expanded ? null : m.id)}
+                    >
+                      {expanded ? "Ocultar tópicos" : "Tópicos"}
+                    </button>
+                  </div>
+                  {expanded && <MatterTopics matterId={m.id} />}
                 </li>
               );
             })}
