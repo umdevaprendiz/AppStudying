@@ -21,6 +21,8 @@ public class UserService {
     private static final int VERIFICATION_TOKEN_VALID_HOURS = 24;
     private static final int REENVIO_MAX_TENTATIVAS = 3;
     private static final Duration REENVIO_JANELA = Duration.ofHours(1);
+    private static final int LOGIN_MAX_TENTATIVAS = 5;
+    private static final Duration LOGIN_JANELA = Duration.ofMinutes(15);
 
     @Autowired
     private UserRepository userRepository;
@@ -96,6 +98,15 @@ public class UserService {
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(VERIFICATION_TOKEN_VALID_HOURS));
         userRepository.save(user);
         emailService.enviarEmailVerificacao(user.getEmail(), token);
+        }
+
+        // Chamado antes de tentar autenticar: sem isso, /api/users/login é
+        // público e sem limite, então dava pra tentar senha por força bruta
+        // contra a conta de qualquer e-mail.
+        public void verificarLimiteDeLogin(String email) {
+        if (!rateLimiter.permitir("login:" + email.toLowerCase(), LOGIN_MAX_TENTATIVAS, LOGIN_JANELA)) {
+            throw new IllegalStateException("Muitas tentativas de login. Aguarde um pouco antes de tentar de novo.");
+        }
         }
 
         public User buscarPorId(Long id){

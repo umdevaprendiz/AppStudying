@@ -58,6 +58,8 @@ public class UserController {
 
     @PostMapping("/login")
     public User autenticar(@RequestParam String email, @RequestParam String senha, HttpServletRequest request) {
+        userService.verificarLimiteDeLogin(email);
+
         Authentication authRequest = new UsernamePasswordAuthenticationToken(email, senha);
         Authentication authResult = authenticationManager.authenticate(authRequest);
 

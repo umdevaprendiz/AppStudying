@@ -75,6 +75,28 @@ public class UserServiceTeste {
     }
 
     @Test
+    void devePermitirLoginDentroDoLimite(){
+        String email = "login@email.com";
+
+        for (int i = 0; i < 5; i++) {
+            assertDoesNotThrow(() -> userService.verificarLimiteDeLogin(email));
+        }
+    }
+
+    @Test
+    void deveLancarExcecaoAoExcederLimiteDeLogin(){
+        String email = "bruteforce@email.com";
+
+        for (int i = 0; i < 5; i++) {
+            userService.verificarLimiteDeLogin(email);
+        }
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.verificarLimiteDeLogin(email);
+        });
+    }
+
+    @Test
     void deveBuscarUsuarioPorIdComSucesso(){
         Long id = 1L;
         User user = new User();
