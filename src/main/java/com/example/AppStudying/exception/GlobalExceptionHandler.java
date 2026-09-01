@@ -84,6 +84,9 @@ public class GlobalExceptionHandler {
         if (mensagem.contains("já está cadastrado") || mensagem.contains("já existe")) {
             return HttpStatus.CONFLICT;
         }
+        if (mensagem.contains("Muitas tentativas")) {
+            return HttpStatus.TOO_MANY_REQUESTS;
+        }
         return HttpStatus.BAD_REQUEST;
     }
 }
