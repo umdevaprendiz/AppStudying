@@ -1,43 +1,61 @@
 package com.example.AppStudying.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Envia e-mail via API HTTP da Brevo (https://api.brevo.com/v3/smtp/email),
+ * não por SMTP direto. A maioria dos provedores de hospedagem grátis
+ * (Render incluso, desde set/2025) bloqueia as portas SMTP de saída
+ * (25/465/587) pra evitar abuso de spam — a API roda sobre HTTPS (443), que
+ * não é bloqueada.
+ */
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final WebClient webClient;
 
-    // URL pública do frontend (a mesma origem do backend em produção); o link
-    // do e-mail leva pra rota /verify-email, que o React Router trata.
     @Value("${app.mail.verification-base-url}")
     private String verificationBaseUrl;
 
-    // Sem isso, o JavaMail monta um remetente "padrão" a partir do usuário e
-    // do IP da máquina local (ex: "usuario"@192.168.0.x) quando nenhum From é
-    // definido — o Gmail rejeita isso com "555 Syntax error, cannot decode
-    // response" porque não é um endereço válido.
-    @Value("${spring.mail.username}")
+    @Value("${brevo.api.key}")
+    private String brevoApiKey;
+
+    // Precisa ser um remetente verificado na conta Brevo (Settings > Senders).
+    @Value("${brevo.sender.email}")
     private String remetente;
+
+    public EmailService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://api.brevo.com/v3").build();
+    }
 
     public void enviarEmailVerificacao(String destinatario, String token) {
         String link = verificationBaseUrl + "/verify-email?token=" + token;
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(remetente);
-        message.setTo(destinatario);
-        message.setSubject("Confirme seu e-mail - AppStudying");
-        message.setText(
+        String texto =
                 "Bem-vindo(a) ao AppStudying!\n\n" +
                 "Clique no link abaixo para confirmar seu e-mail e ativar sua conta:\n" +
                 link + "\n\n" +
-                "Esse link expira em 24 horas. Se você não criou essa conta, ignore este e-mail."
+                "Esse link expira em 24 horas. Se você não criou essa conta, ignore este e-mail.";
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("email", remetente, "name", "AppStudying"),
+                "to", List.of(Map.of("email", destinatario)),
+                "subject", "Confirme seu e-mail - AppStudying",
+                "textContent", texto
         );
 
-        mailSender.send(message);
+        webClient.post()
+                .uri("/smtp/email")
+                .header("api-key", brevoApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
     }
 }
