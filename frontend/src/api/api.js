@@ -41,6 +41,20 @@ export const Api = {
     return request("GET", `/api/matters/user/${userId}`);
   },
 
+  // Topics
+  criarTopic(matterId, nome) {
+    return request("POST", "/api/topics", { params: { matterId }, body: { nome } });
+  },
+  listarTopicsPorMatter(matterId) {
+    return request("GET", `/api/topics/matter/${matterId}`);
+  },
+  atualizarTopic(id, novoNome, novoStatus) {
+    return request("PUT", `/api/topics/${id}`, { params: { novoNome, novoStatus } });
+  },
+  excluirTopic(id) {
+    return request("DELETE", `/api/topics/${id}`);
+  },
+
   // Study Requests
   enviarSolicitacao(receiverId, matterId, message) {
     return request("POST", "/api/study-requests", {
