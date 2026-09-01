@@ -3,6 +3,7 @@ package com.example.AppStudying.UserServiceTeste;
 import com.example.AppStudying.model.User;
 import com.example.AppStudying.repository.UserRepository;
 import com.example.AppStudying.security.RateLimiterService;
+import com.example.AppStudying.services.AccountDeletionService;
 import com.example.AppStudying.services.EmailService;
 import com.example.AppStudying.services.UserService;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ public class UserServiceTeste {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private AccountDeletionService accountDeletionService;
 
     // Spy (instância real, não mock puro): queremos o comportamento genuíno
     // de janela deslizante pra testar o limite de reenvio de verdade, não
@@ -397,6 +401,106 @@ public class UserServiceTeste {
         userService.verificarEmail(token);
 
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void registrarLoginDeveAtualizarUltimoLogin(){
+        String email = "ativo@email.com";
+        User user = new User();
+        user.setEmail(email);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.registrarLogin(email);
+
+        assertNotNull(user.getLastLoginAt());
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void deveSolicitarExclusaoDeContaComSucesso(){
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("excluir@email.com");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.solicitarExclusaoConta(userId);
+
+        assertNotNull(user.getDeletionToken());
+        verify(userRepository, times(1)).save(user);
+        verify(emailService, times(1)).enviarEmailConfirmacaoExclusao(eq(user.getEmail()), anyString());
+    }
+
+    @Test
+    void deveLancarExcecaoAoExcederLimiteDeSolicitacaoDeExclusao(){
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("spam-exclusao@email.com");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        // As 3 primeiras tentativas (o limite) devem passar sem erro.
+        userService.solicitarExclusaoConta(userId);
+        userService.solicitarExclusaoConta(userId);
+        userService.solicitarExclusaoConta(userId);
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.solicitarExclusaoConta(userId);
+        });
+
+        verify(emailService, times(3)).enviarEmailConfirmacaoExclusao(any(), any());
+    }
+
+    @Test
+    void deveConfirmarExclusaoDeContaComSucesso(){
+        String token = "token-exclusao-valido";
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setDeletionToken(token);
+        user.setDeletionTokenExpiry(LocalDateTime.now().plusHours(1));
+
+        when(userRepository.findByDeletionToken(token)).thenReturn(Optional.of(user));
+
+        userService.confirmarExclusaoConta(token);
+
+        verify(accountDeletionService, times(1)).excluirConta(userId);
+    }
+
+    @Test
+    void deveLancarExcecaoAoConfirmarExclusaoComTokenInvalido(){
+        String token = "token-inexistente";
+
+        when(userRepository.findByDeletionToken(token)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.confirmarExclusaoConta(token);
+        });
+
+        verify(accountDeletionService, never()).excluirConta(any());
+    }
+
+    @Test
+    void deveLancarExcecaoAoConfirmarExclusaoComTokenExpirado(){
+        String token = "token-exclusao-expirado";
+        User user = new User();
+        user.setId(1L);
+        user.setDeletionToken(token);
+        user.setDeletionTokenExpiry(LocalDateTime.now().minusMinutes(1));
+
+        when(userRepository.findByDeletionToken(token)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.confirmarExclusaoConta(token);
+        });
+
+        verify(accountDeletionService, never()).excluirConta(any());
     }
 
 }

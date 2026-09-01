@@ -58,4 +58,32 @@ public class EmailService {
                 .toBodilessEntity()
                 .block();
     }
+
+    public void enviarEmailConfirmacaoExclusao(String destinatario, String token) {
+        String link = verificationBaseUrl + "/delete-account?token=" + token;
+        String texto =
+                "Recebemos um pedido para excluir sua conta no AppStudying.\n\n" +
+                "Se foi você, clique no link abaixo para confirmar. Essa ação é " +
+                "irreversível e apaga todos os seus dados (matérias, tópicos, " +
+                "sessões de estudo, conversas):\n" +
+                link + "\n\n" +
+                "Esse link expira em 1 hora. Se você não pediu isso, ignore este e-mail — " +
+                "sua conta continua normalmente.";
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("email", remetente, "name", "AppStudying"),
+                "to", List.of(Map.of("email", destinatario)),
+                "subject", "Confirme a exclusão da sua conta - AppStudying",
+                "textContent", texto
+        );
+
+        webClient.post()
+                .uri("/smtp/email")
+                .header("api-key", brevoApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
 }

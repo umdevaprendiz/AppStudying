@@ -23,6 +23,9 @@ public class UserService {
     private static final Duration REENVIO_JANELA = Duration.ofHours(1);
     private static final int LOGIN_MAX_TENTATIVAS = 5;
     private static final Duration LOGIN_JANELA = Duration.ofMinutes(15);
+    private static final int EXCLUSAO_MAX_TENTATIVAS = 3;
+    private static final Duration EXCLUSAO_JANELA = Duration.ofHours(1);
+    private static final int EXCLUSAO_TOKEN_VALID_HOURS = 1;
 
     @Autowired
     private UserRepository userRepository;
@@ -32,6 +35,8 @@ public class UserService {
     private EmailService emailService;
     @Autowired
     private RateLimiterService rateLimiter;
+    @Autowired
+    private AccountDeletionService accountDeletionService;
 
     // Se o envio do e-mail falhar (SMTP fora do ar, credencial errada), o
     // insert do usuário e a geração do token são desfeitos junto — melhor o
@@ -51,6 +56,7 @@ public class UserService {
         // Nunca confia em "verified" vindo do cliente: toda conta nova começa
         // não verificada, com um token de confirmação de vida curta.
         user.setVerified(false);
+        user.setCreatedAt(LocalDateTime.now());
         String token = UUID.randomUUID().toString();
         user.setVerificationToken(token);
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(VERIFICATION_TOKEN_VALID_HOURS));
@@ -107,6 +113,41 @@ public class UserService {
         if (!rateLimiter.permitir("login:" + email.toLowerCase(), LOGIN_MAX_TENTATIVAS, LOGIN_JANELA)) {
             throw new IllegalStateException("Muitas tentativas de login. Aguarde um pouco antes de tentar de novo.");
         }
+        }
+
+        // Chamado após autenticar com sucesso: registra a atividade pra
+        // alimentar o expurgo automático de contas inativas.
+        @Transactional
+        public User registrarLogin(String email) {
+        User user = buscarPorEmail(email);
+        user.setLastLoginAt(LocalDateTime.now());
+        return userRepository.save(user);
+        }
+
+        @Transactional
+        public void solicitarExclusaoConta(Long userId) {
+        if (!rateLimiter.permitir("solicitar-exclusao:" + userId, EXCLUSAO_MAX_TENTATIVAS, EXCLUSAO_JANELA)) {
+            throw new IllegalStateException("Muitas tentativas de exclusão. Aguarde um pouco antes de tentar de novo.");
+        }
+
+        User user = buscarPorId(userId);
+        String token = UUID.randomUUID().toString();
+        user.setDeletionToken(token);
+        user.setDeletionTokenExpiry(LocalDateTime.now().plusHours(EXCLUSAO_TOKEN_VALID_HOURS));
+        userRepository.save(user);
+        emailService.enviarEmailConfirmacaoExclusao(user.getEmail(), token);
+        }
+
+        @Transactional
+        public void confirmarExclusaoConta(String token) {
+        User user = userRepository.findByDeletionToken(token)
+                .orElseThrow(() -> new IllegalStateException("Link de exclusão inválido."));
+
+        if (user.getDeletionTokenExpiry() == null || user.getDeletionTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Link de exclusão expirado. Solicite novamente em Configurações.");
+        }
+
+        accountDeletionService.excluirConta(user.getId());
         }
 
         public User buscarPorId(Long id){

@@ -51,4 +51,20 @@ public class User implements Serializable {
     @Column(name = "verification_token_expiry")
     private LocalDateTime verificationTokenExpiry;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @JsonIgnore
+    @Column(name = "deletion_token")
+    private String deletionToken;
+
+    @JsonIgnore
+    @Column(name = "deletion_token_expiry")
+    private LocalDateTime deletionTokenExpiry;
+
 }

@@ -12,7 +12,9 @@
 
 ## 🚧 Status do projeto
 
-Em desenvolvimento ativo — a base (autenticação, autorização, tempo real, testes automatizados) está completa e o projeto já tem pipeline de deploy funcional (Docker, CI, migrations versionadas). O que falta é uma funcionalidade pontual (CRUD de tópicos, ver abaixo) e o primeiro deploy real em produção.
+**No ar:** [appstudying.onrender.com](https://appstudying.onrender.com) — hospedado no Render (free tier: pode levar ~50s pra "acordar" no primeiro acesso após um período sem uso) com banco MySQL gerenciado no Aiven.
+
+Projeto completo e funcional: autenticação com verificação de e-mail, autorização, tempo real, configurações de conta (troca de senha, exclusão com confirmação por e-mail e expurgo automático de contas inativas), testes automatizados e pipeline de deploy (Docker, CI, migrations versionadas via Flyway).
 
 ---
 
@@ -30,8 +32,12 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 **Conta e organização de estudos**
 - [x] Cadastro e autenticação de usuários (com senha criptografada via `BCryptPasswordEncoder`)
+- [x] Confirmação de e-mail obrigatória no cadastro (token com validade, e-mail via API da Brevo) — login fica bloqueado até a conta ser verificada, com opção de reenviar o e-mail
+- [x] Página de configurações: troca de senha e exclusão da própria conta
+- [x] Exclusão de conta protegida por confirmação em e-mail (mesmo padrão do cadastro) — a conta só é apagada depois que a pessoa clica no link, nunca automaticamente ao abrir a página
+- [x] Expurgo automático diário de contas inativas há 30+ dias (job agendado), usando o mesmo fluxo de exclusão em cascata
 - [x] Busca, atualização e alteração de senha de usuário
-- [x] CRUD completo de matérias (`Matter`) vinculadas a um usuário, documentado via Swagger/OpenAPI
+- [x] CRUD completo de matérias (`Matter`) e de tópicos (`Topic`) vinculados a uma matéria, documentado via Swagger/OpenAPI
 - [x] Cronômetro de sessão de estudo por matéria (`StudySessionController`) — inicia, para, calcula a duração e salva automaticamente um evento na linha do tempo
 - [x] Registro de eventos em linha do tempo/calendário (`TimeLineController`) — criação e listagem por usuário
 - [x] Resumo de matérias estudadas por usuário (tempo total e nº de sessões), usado na página de perfil
@@ -47,31 +53,31 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 
 **Segurança**
 - [x] Autenticação real via Spring Security com sessão persistida em banco (`spring-session-jdbc`) — login estabelece uma sessão, cookie `SESSION` autentica as próximas requisições
-- [x] Todas as rotas exigem autenticação, exceto cadastro, login e a documentação Swagger
-- [x] Autorização por dono do recurso em todos os endpoints sensíveis — cada usuário só age sobre os próprios dados (sessões de estudo, mensagens, solicitações, matérias, eventos da linha do tempo); a identidade vem da sessão autenticada, nunca de um parâmetro enviado pelo cliente
+- [x] Todas as rotas exigem autenticação, exceto cadastro, login, verificação/exclusão de conta por token e a documentação Swagger
+- [x] Autorização por dono do recurso em todos os endpoints sensíveis — cada usuário só age sobre os próprios dados (sessões de estudo, mensagens, solicitações, matérias, tópicos, eventos da linha do tempo); a identidade vem da sessão autenticada, nunca de um parâmetro enviado pelo cliente
 - [x] Assinaturas do WebSocket também são validadas: não dá para se inscrever no tópico de notificação de outro usuário
+- [x] Limite de tentativas (rate limiting) em login, reenvio de verificação de e-mail e solicitação de exclusão de conta — evita força bruta de senha e spam de e-mail
 - [x] Hash da senha nunca é serializado nas respostas da API (`@JsonProperty(WRITE_ONLY)`)
 - [x] Proteção contra mass assignment no cadastro de usuário e criação de matéria (o `id` enviado pelo cliente é sempre ignorado)
 - [x] Testes de integração (MockMvc) cobrindo o fluxo de login, bloqueio de acesso não autenticado e bloqueio de acesso a recurso de outro usuário
 
 **Infraestrutura**
-- [x] Persistência com MySQL rodando via Docker Compose (volume nomeado, dados persistem entre reinicializações do container)
+- [x] Persistência com MySQL rodando via Docker Compose em dev (volume nomeado) e MySQL gerenciado (Aiven) em produção, com conexão criptografada (SSL obrigatório)
 - [x] Cache habilitado (`@EnableCaching`) para consultas de matéria por id
-- [x] Credenciais do banco de dados isoladas via variáveis de ambiente (`.env`), carregadas por um `EnvironmentPostProcessor` próprio
-- [x] Front-end em React (Vite) completo — login, cadastro, dashboard, perfil, chat e cronômetro consumindo a API REST e o WebSocket, com proxy do Vite pro backend (mesma origem, sem dor de cabeça de CORS/cookies)
-- [x] Testes unitários (JUnit 5 + Mockito) para todos os services (`UserService`, `MatterService`, `TimeLineService`, `StudySessionService`, `StudyRequestService`, `ChatService`)
-
-### Em desenvolvimento
-- [ ] CRUD de tópicos (`Topic`) vinculados a uma matéria
+- [x] Credenciais do banco de dados e da API de e-mail isoladas via variáveis de ambiente (`.env`), carregadas por um `EnvironmentPostProcessor` próprio
+- [x] Envio de e-mail transacional via API HTTP da Brevo (não SMTP direto — a maioria dos provedores de hospedagem grátis bloqueia portas SMTP de saída)
+- [x] Fuso horário do servidor fixado explicitamente no boot da aplicação, pra `LocalDateTime.now()` bater com o horário real independente de onde o container está hospedado
+- [x] Front-end em React (Vite) completo — login, cadastro, verificação de e-mail, dashboard, tópicos, configurações, perfil, chat e cronômetro consumindo a API REST e o WebSocket, com proxy do Vite pro backend (mesma origem, sem dor de cabeça de CORS/cookies)
+- [x] Testes unitários (JUnit 5 + Mockito) para todos os services e agendamentos (`UserService`, `MatterService`, `TopicService`, `TimeLineService`, `StudySessionService`, `StudyRequestService`, `ChatService`, `AccountDeletionService`, `AccountCleanupScheduler`)
 
 ### Preparado para deploy
 - [x] `Dockerfile` multi-stage: builda o frontend, embute o build em `src/main/resources/static` e empacota tudo num único jar/container
 - [x] CI (`.github/workflows/ci.yml`): testes do backend com MySQL real, lint/build do frontend, build da imagem Docker
-- [x] Proteção CSRF via cookie (`XSRF-TOKEN` / header `X-XSRF-TOKEN`), com login/registro isentos por não terem sessão ainda
+- [x] Proteção CSRF via cookie (`XSRF-TOKEN` / header `X-XSRF-TOKEN`), com login/registro/exclusão-de-conta-por-token isentos por não terem sessão ainda
 - [x] CORS sem wildcard: origens liberadas via `app.cors.allowed-origins`, vazio por padrão em produção (mesma origem)
 - [x] Schema do banco versionado via Flyway (`src/main/resources/db/migration`); `ddl-auto=validate` em vez de `update`
 - [x] Cadastro coleta apenas nome, e-mail e senha — nenhum dado sensível como CPF é armazenado
-- [x] Perfil `prod` (`application-prod.properties`): cookie de sessão `secure`, CORS vazio
+- [x] Perfil `prod` (`application-prod.properties`): cookie de sessão `secure`, CORS vazio, pool de conexões do Hikari ajustado pra um banco remoto
 - [x] Actuator (`/actuator/health`) para health check da plataforma de deploy
 
 ---
@@ -120,12 +126,16 @@ A API fica documentada em `http://localhost:8080/swagger-ui.html`.
 | Framework | Spring Boot 4.1.0 |
 | Segurança | Spring Security |
 | Persistência | Spring Data JPA + Hibernate |
-| Banco de dados | MySQL |
+| Banco de dados | MySQL (Aiven em produção) |
+| Migrations | Flyway |
 | Cache | Spring Cache |
+| Agendamento | Spring Scheduling (`@Scheduled`) |
+| E-mail transacional | API HTTP da Brevo |
 | Documentação de API | springdoc-openapi (Swagger UI) |
 | Comunicação em tempo real | WebSocket |
 | Containerização | Docker / Docker Compose |
 | Build | Maven |
+| Deploy | Render |
 | Front-end | React (Vite) |
 | Roteamento (front-end) | React Router |
 | WebSocket (front-end) | @stomp/stompjs + sockjs-client |
@@ -137,14 +147,17 @@ A API fica documentada em `http://localhost:8080/swagger-ui.html`.
 ```
 AppStudying/
 ├── src/main/java/com/example/AppStudying/
-│   ├── AppStudyingApplication.java
+│   ├── AppStudyingApplication.java   # @EnableCaching, @EnableScheduling, fuso horário fixo
 │   ├── configuration/        # SecurityConfig, WebConfig (CORS), FlywayConfig,
 │   │                         # DotenvEnvironmentPostProcessor
 │   ├── webSocketConfig/      # Configuração do broker STOMP (/topic, /app, endpoint /ws)
-│   ├── controllers/          # UserController, MatterController, StudyRequestController,
-│   │                         # StudySessionController, ChatController, TimeLineController,
-│   │                         # CsrfController, SpaForwardController
-│   ├── services/             # Regras de negócio de cada domínio
+│   ├── controllers/          # UserController, MatterController, TopicController,
+│   │                         # StudyRequestController, StudySessionController, ChatController,
+│   │                         # TimeLineController, CsrfController, SpaForwardController
+│   ├── services/             # Regras de negócio de cada domínio, incluindo EmailService
+│   │                         # (Brevo), AccountDeletionService (exclusão em cascata) e
+│   │                         # AccountCleanupScheduler (expurgo diário de contas inativas)
+│   ├── security/              # CurrentUser, CustomUserDetails(Service), RateLimiterService
 │   ├── repository/           # Interfaces JpaRepository
 │   ├── model/                # User, Matter, Topic, StudySession, StudyRequest,
 │   │                         # Conversation, ChatMessage, TimeLine
@@ -152,14 +165,15 @@ AppStudying/
 │   └── dto/                  # MatterStudySummaryDTO, etc.
 ├── src/main/resources/
 │   ├── application.properties, application-prod.properties
-│   └── db/migration/         # Migrations versionadas (Flyway)
+│   └── db/migration/         # Migrations versionadas (Flyway, V1 a V4)
 ├── src/test/java/...         # Testes unitários e de integração (JUnit 5 + Mockito + MockMvc)
 ├── frontend/
 │   └── src/
 │       ├── api/              # http.js (fetch wrapper + CSRF), api.js (chamadas REST), ws.js (WebSocket)
-│       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer
+│       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer, MatterTopics
 │       ├── context/          # AuthContext (usuário logado via localStorage)
-│       └── pages/            # Login, Register, Dashboard, Profile
+│       └── pages/            # Login, Register, VerifyEmail, Dashboard, Profile,
+│                              # Settings, DeleteAccount
 ├── .github/workflows/ci.yml  # CI: testes com MySQL real, lint/build do frontend, build da imagem
 ├── Dockerfile                 # Build multi-stage: frontend + backend num único container
 ├── compose.yaml               # Serviço MySQL com volume nomeado (uso local/CI)
