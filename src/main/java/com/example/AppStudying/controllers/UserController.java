@@ -70,7 +70,7 @@ public class UserController {
         HttpSession session = request.getSession(true);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
-        return userService.buscarPorEmail(email);
+        return userService.registrarLogin(email);
     }
 
     @PostMapping("/logout")
@@ -85,5 +85,21 @@ public class UserController {
     @PutMapping("/{id}")
     public User atualizarUsuario(@PathVariable Long id, @RequestParam String novoNome, @RequestParam String email) {
         return userService.atualizarUsuario(id, novoNome, email, CurrentUser.id());
+    }
+
+    @PutMapping("/{id}/senha")
+    public void alterarSenha(@PathVariable Long id, @RequestParam String senhaAtual, @RequestParam String novaSenha) {
+        CurrentUser.requireSelf(id);
+        userService.alterarSenha(id, senhaAtual, novaSenha);
+    }
+
+    @PostMapping("/solicitar-exclusao")
+    public void solicitarExclusaoConta() {
+        userService.solicitarExclusaoConta(CurrentUser.id());
+    }
+
+    @PostMapping("/confirmar-exclusao")
+    public void confirmarExclusaoConta(@RequestParam String token) {
+        userService.confirmarExclusaoConta(token);
     }
 }

@@ -19,4 +19,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying
     @Query("UPDATE ChatMessage m SET m.read = true WHERE m.receiver.id = :selfId AND m.sender.id = :otherId AND m.read = false")
     void marcarComoLidas(@Param("selfId") Long selfId, @Param("otherId") Long otherId);
+
+    @Modifying
+    @Query("DELETE FROM ChatMessage m WHERE m.sender.id = :userId OR m.receiver.id = :userId")
+    void deleteEnvolvendoUsuario(@Param("userId") Long userId);
 }

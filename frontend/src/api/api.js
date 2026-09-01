@@ -29,6 +29,15 @@ export const Api = {
   listarSugestoes(limite = 10) {
     return request("GET", "/api/users/sugestoes", { params: { limite } });
   },
+  alterarSenha(id, senhaAtual, novaSenha) {
+    return request("PUT", `/api/users/${id}/senha`, { params: { senhaAtual, novaSenha } });
+  },
+  solicitarExclusaoConta() {
+    return request("POST", "/api/users/solicitar-exclusao");
+  },
+  confirmarExclusaoConta(token) {
+    return request("POST", "/api/users/confirmar-exclusao", { params: { token } });
+  },
 
   // Matters
   criarMatter(nome) {

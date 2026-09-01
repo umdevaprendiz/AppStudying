@@ -252,6 +252,7 @@ export function Dashboard() {
           <span className={`ws-status ${connected ? "connected" : ""}`}>
             {connected ? "conectado" : "conectando..."}
           </span>
+          <button className="secondary" onClick={() => navigate("/settings")}>Configurações</button>
           <button className="secondary" onClick={handleLogout}>Sair</button>
         </div>
       </header>

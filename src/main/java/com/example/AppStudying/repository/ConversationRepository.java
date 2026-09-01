@@ -3,6 +3,7 @@ package com.example.AppStudying.repository;
 import com.example.AppStudying.enums.RequestStatus;
 import com.example.AppStudying.model.Conversation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,4 +22,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     List<Conversation> findPorUsuarioEStatus(@Param("userId") Long userId, @Param("status") RequestStatus status);
 
     long countByReceiverIdAndStatus(Long receiverId, RequestStatus status);
+
+    @Modifying
+    @Query("DELETE FROM Conversation c WHERE c.requester.id = :userId OR c.receiver.id = :userId")
+    void deleteEnvolvendoUsuario(@Param("userId") Long userId);
 }
