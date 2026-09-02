@@ -26,6 +26,8 @@ public class UserService {
     private static final int EXCLUSAO_MAX_TENTATIVAS = 3;
     private static final Duration EXCLUSAO_JANELA = Duration.ofHours(1);
     private static final int EXCLUSAO_TOKEN_VALID_HOURS = 1;
+    private static final int CADASTRO_MAX_TENTATIVAS = 5;
+    private static final Duration CADASTRO_JANELA = Duration.ofHours(1);
 
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +46,16 @@ public class UserService {
     // mesmo e-mail) do que criar uma conta "fantasma" sem e-mail de
     // verificação nenhum.
     @Transactional
-    public User registerUser(User user) {
+    public User registerUser(User user, String clienteIp) {
+        // Sem isso, /api/users/registrarUser é público e sem limite — dava
+        // pra escrever um script criando centenas de contas por segundo,
+        // estourando a cota de e-mail da Brevo ou enchendo o banco de lixo.
+        // Por IP (não por e-mail): quem abusa escolhe um e-mail novo a cada
+        // tentativa, então limitar por e-mail não bloquearia nada.
+        if (!rateLimiter.permitir("cadastro:" + clienteIp, CADASTRO_MAX_TENTATIVAS, CADASTRO_JANELA)) {
+            throw new IllegalStateException("Muitas tentativas de cadastro. Aguarde um pouco antes de tentar de novo.");
+        }
+
         user.setId(null);
 
         if (userRepository.existsByEmail(user.getEmail())) {
