@@ -112,9 +112,13 @@ A API fica documentada em `http://localhost:8080/swagger-ui.html`.
 
 ## 🖼️ Screenshots
 
-> Documentação interativa da API via Swagger UI, rodando em `http://localhost:8080/swagger-ui.html`.
+| | |
+|---|---|
+| **Login** ![Login](docs/screenshots/login.png) | **Cadastro** ![Cadastro](docs/screenshots/register.png) |
+| **Dashboard — matérias** ![Dashboard](docs/screenshots/dashboard.png) | **Tópicos por matéria** ![Tópicos](docs/screenshots/topics.png) |
+| **Solicitação de parceria de estudo** ![Solicitação de estudo](docs/screenshots/study-request.png) | **Linha do tempo** ![Linha do tempo](docs/screenshots/timeline.png) |
 
-*(Prints em breve)*
+A API também tem documentação interativa via Swagger UI, em `http://localhost:8080/swagger-ui.html`.
 
 ---
 
