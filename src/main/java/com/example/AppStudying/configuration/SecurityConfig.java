@@ -37,6 +37,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/csrf", "/api/users/verificar-email").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        // Trava explícita, além do management.endpoints.web.exposure.include=health
+                        // do application.properties: se algum dia esse "include" for ampliado
+                        // (env, beans, configprops...) por engano, esses endpoints continuam
+                        // exigindo login em vez de cair no anyRequest().permitAll() do fim.
+                        .requestMatchers("/actuator/**").authenticated()
                         // Só a API e o WebSocket exigem autenticação. O resto (o shell do
                         // React embutido no jar: index.html, /assets/**, rotas do React
                         // Router) precisa carregar pra qualquer um — inclusive a própria

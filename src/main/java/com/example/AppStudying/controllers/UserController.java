@@ -32,8 +32,8 @@ public class UserController {
     }
 
     @PostMapping("/registrarUser")
-    public User registerUser(@RequestBody User user) {
-        return userService.registerUser(user);
+    public User registerUser(@RequestBody User user, HttpServletRequest request) {
+        return userService.registerUser(user, request.getRemoteAddr());
     }
 
     @GetMapping("/verificar-email")

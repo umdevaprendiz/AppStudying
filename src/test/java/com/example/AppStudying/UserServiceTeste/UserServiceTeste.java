@@ -55,7 +55,7 @@ public class UserServiceTeste {
         when(passwordEncoder.encode("senha123")).thenReturn("senhaCriptografada");
         when(userRepository.save(user)).thenReturn(user);
 
-        User resultado = userService.registerUser(user);
+        User resultado = userService.registerUser(user, "127.0.0.1");
 
         assertNotNull(resultado);
         assertEquals("senhaCriptografada", resultado.getPassword());
@@ -72,10 +72,35 @@ public class UserServiceTeste {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> {
-            userService.registerUser(user);
+            userService.registerUser(user, "127.0.0.1");
         });
 
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void deveLancarExcecaoAoExcederLimiteDeCadastro(){
+        String ip = "10.0.0.5";
+
+        for (int i = 0; i < 5; i++) {
+            User user = new User();
+            user.setEmail("cadastro" + i + "@email.com");
+            user.setPassword("senha123");
+            when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
+            when(passwordEncoder.encode("senha123")).thenReturn("senhaCriptografada");
+            when(userRepository.save(user)).thenReturn(user);
+            userService.registerUser(user, ip);
+        }
+
+        User sexto = new User();
+        sexto.setEmail("cadastro5@email.com");
+        sexto.setPassword("senha123");
+
+        assertThrows(IllegalStateException.class, () -> {
+            userService.registerUser(sexto, ip);
+        });
+
+        verify(userRepository, never()).existsByEmail("cadastro5@email.com");
     }
 
     @Test
