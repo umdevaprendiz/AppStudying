@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 @Configuration
 public class SecurityConfig {
@@ -57,6 +58,36 @@ public class SecurityConfig {
                         // Login/registro não têm sessão autenticada ainda para proteger, e o
                         // handshake do SockJS não consegue enviar o header CSRF.
                         .ignoringRequestMatchers("/api/users/registrarUser", "/api/users/login", "/api/users/confirmar-exclusao", "/ws/**")
+                )
+                .headers(headers -> headers
+                        // Restringe de onde o navegador pode carregar/executar recursos.
+                        // script-src só 'self' (nada de inline nem CDN externo); os únicos
+                        // domínios de fora liberados são os do Google Fonts, usados pela UI.
+                        // 'unsafe-inline' em style-src é necessário pro atributo style=""
+                        // que o React gera para cores dinâmicas — restringir isso exigiria
+                        // trocar todo estilo inline por classes CSS, sem ganho real de
+                        // segurança (o risco de verdade, injeção de script, já está coberto).
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self'; " +
+                                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                                "font-src 'self' https://fonts.gstatic.com; " +
+                                "img-src 'self' data:; " +
+                                "connect-src 'self'; " +
+                                "object-src 'none'; " +
+                                "base-uri 'self'; " +
+                                "frame-ancestors 'none'"
+                        ))
+                        // Força HTTPS em requisições futuras, inclusive subdomínios, por 1
+                        // ano. Só é enviado quando a requisição já chegou em HTTPS (o Render
+                        // termina o TLS e repassa isso via X-Forwarded-Proto).
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                        )
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                        )
                 );
 
         return http.build();

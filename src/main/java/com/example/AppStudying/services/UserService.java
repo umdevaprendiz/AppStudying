@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -28,6 +29,8 @@ public class UserService {
     private static final int EXCLUSAO_TOKEN_VALID_HOURS = 1;
     private static final int CADASTRO_MAX_TENTATIVAS = 5;
     private static final Duration CADASTRO_JANELA = Duration.ofHours(1);
+    private static final int SENHA_MIN_LENGTH = 8;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @Autowired
     private UserRepository userRepository;
@@ -57,11 +60,13 @@ public class UserService {
         }
 
         user.setId(null);
+        validarEmail(user.getEmail());
 
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalStateException("Email já está cadastrado!");
         }
 
+        validarSenha(user.getPassword());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         // Nunca confia em "verified" vindo do cliente: toda conta nova começa
@@ -186,6 +191,7 @@ public class UserService {
         if (!id.equals(currentUserId)) {
             throw new IllegalStateException("Você não tem permissão para atualizar esse usuário!");
         }
+        validarEmail(novoEmail);
 
         User user = buscarPorId(id);
         user.setName(novoNome);
@@ -199,9 +205,30 @@ public class UserService {
         if (!passwordEncoder.matches(senhaAtual, user.getPassword())) {
             throw new IllegalStateException("Senha atual incorreta!");
         }
+        validarSenha(novaSenha);
 
         user.setPassword(passwordEncoder.encode(novaSenha));
         userRepository.save(user);
+        }
+
+        // Chamado no cadastro e na troca de e-mail: sem isso, o backend aceita
+        // qualquer string como e-mail, mesmo uma que nunca vai receber o
+        // e-mail de verificação. A validação de formato do <input type="email">
+        // no front é só cosmética — quem chama a API direto (curl/Postman)
+        // passa reto por ela.
+        private void validarEmail(String email) {
+            if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
+                throw new IllegalStateException("E-mail inválido.");
+            }
+        }
+
+        // Chamado no cadastro e na troca de senha: sem isso, o backend aceita
+        // senha de 1 caractere (ou vazia), mesmo com o <input required> do
+        // front, pelo mesmo motivo do comentário acima.
+        private void validarSenha(String senha) {
+            if (senha == null || senha.length() < SENHA_MIN_LENGTH) {
+                throw new IllegalStateException("A senha deve ter pelo menos " + SENHA_MIN_LENGTH + " caracteres.");
+            }
         }
     }
 
