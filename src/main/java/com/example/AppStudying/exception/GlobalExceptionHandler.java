@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -27,6 +28,18 @@ public class GlobalExceptionHandler {
     // handler mais próximo na hierarquia, então isso tem prioridade sobre o
     // handler genérico abaixo quando o login falha por conta não verificada
     // (CustomUserDetails.isEnabled() == false).
+    // Bots de internet vasculhando rotas conhecidas com o método errado
+    // (ex: POST em endpoint que só aceita GET) geram isso constantemente em
+    // qualquer app público — não é uma falha da aplicação, então não sobe
+    // pro handler genérico como erro 500 nem loga stack trace completo.
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        HttpStatus status = HttpStatus.METHOD_NOT_ALLOWED;
+        log.warn("Método não suportado: {}", ex.getMessage());
+        return ResponseEntity.status(status)
+                .body(new ErrorResponse(status.value(), "Método não permitido para esse endpoint."));
+    }
+
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ErrorResponse> handleDisabled(DisabledException ex) {
         HttpStatus status = HttpStatus.FORBIDDEN;
