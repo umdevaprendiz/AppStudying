@@ -32,6 +32,12 @@ export const Api = {
   alterarSenha(id, senhaAtual, novaSenha) {
     return request("PUT", `/api/users/${id}/senha`, { params: { senhaAtual, novaSenha } });
   },
+  solicitarTrocaEmail(novoEmail) {
+    return request("POST", "/api/users/solicitar-troca-email", { params: { novoEmail } });
+  },
+  confirmarTrocaEmail(token) {
+    return request("POST", "/api/users/confirmar-troca-email", { params: { token } });
+  },
   solicitarExclusaoConta() {
     return request("POST", "/api/users/solicitar-exclusao");
   },

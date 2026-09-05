@@ -59,6 +59,32 @@ public class EmailService {
                 .block();
     }
 
+    public void enviarEmailTrocaEmail(String destinatario, String token) {
+        String link = verificationBaseUrl + "/confirmar-troca-email?token=" + token;
+        String texto =
+                "Recebemos um pedido para trocar o e-mail da sua conta no AppStudying para este endereço.\n\n" +
+                "Se foi você, clique no link abaixo para confirmar a troca:\n" +
+                link + "\n\n" +
+                "Esse link expira em 24 horas. Se você não pediu isso, ignore este e-mail — " +
+                "sua conta continua com o e-mail atual.";
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("email", remetente, "name", "AppStudying"),
+                "to", List.of(Map.of("email", destinatario)),
+                "subject", "Confirme a troca do seu e-mail - AppStudying",
+                "textContent", texto
+        );
+
+        webClient.post()
+                .uri("/smtp/email")
+                .header("api-key", brevoApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
+
     public void enviarEmailConfirmacaoExclusao(String destinatario, String token) {
         String link = verificationBaseUrl + "/delete-account?token=" + token;
         String texto =

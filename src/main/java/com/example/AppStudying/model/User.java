@@ -67,4 +67,18 @@ public class User implements Serializable {
     @Column(name = "deletion_token_expiry")
     private LocalDateTime deletionTokenExpiry;
 
+    // E-mail ainda não confirmado: enquanto o token não é validado, "email"
+    // continua sendo o valor antigo — troca de e-mail nunca é imediata.
+    @JsonIgnore
+    @Column(name = "pending_email")
+    private String pendingEmail;
+
+    @JsonIgnore
+    @Column(name = "email_change_token")
+    private String emailChangeToken;
+
+    @JsonIgnore
+    @Column(name = "email_change_token_expiry")
+    private LocalDateTime emailChangeTokenExpiry;
+
 }

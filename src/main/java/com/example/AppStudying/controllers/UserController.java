@@ -93,6 +93,16 @@ public class UserController {
         userService.alterarSenha(id, senhaAtual, novaSenha);
     }
 
+    @PostMapping("/solicitar-troca-email")
+    public void solicitarTrocaEmail(@RequestParam String novoEmail) {
+        userService.solicitarTrocaEmail(CurrentUser.id(), novoEmail);
+    }
+
+    @PostMapping("/confirmar-troca-email")
+    public void confirmarTrocaEmail(@RequestParam String token) {
+        userService.confirmarTrocaEmail(token);
+    }
+
     @PostMapping("/solicitar-exclusao")
     public void solicitarExclusaoConta() {
         userService.solicitarExclusaoConta(CurrentUser.id());
