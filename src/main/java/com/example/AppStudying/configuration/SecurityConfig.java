@@ -34,7 +34,7 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/users/registrarUser", "/api/users/login", "/api/users/reenviar-verificacao", "/api/users/confirmar-exclusao").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/registrarUser", "/api/users/login", "/api/users/reenviar-verificacao", "/api/users/confirmar-exclusao", "/api/users/confirmar-troca-email").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/csrf", "/api/users/verificar-email").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(requestHandler)
                         // Login/registro não têm sessão autenticada ainda para proteger, e o
                         // handshake do SockJS não consegue enviar o header CSRF.
-                        .ignoringRequestMatchers("/api/users/registrarUser", "/api/users/login", "/api/users/confirmar-exclusao", "/ws/**")
+                        .ignoringRequestMatchers("/api/users/registrarUser", "/api/users/login", "/api/users/confirmar-exclusao", "/api/users/confirmar-troca-email", "/ws/**")
                 )
                 .headers(headers -> headers
                         // Restringe de onde o navegador pode carregar/executar recursos.

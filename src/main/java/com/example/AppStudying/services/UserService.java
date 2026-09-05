@@ -31,6 +31,9 @@ public class UserService {
     private static final Duration CADASTRO_JANELA = Duration.ofHours(1);
     private static final int SENHA_MIN_LENGTH = 8;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final int TROCA_EMAIL_MAX_TENTATIVAS = 3;
+    private static final Duration TROCA_EMAIL_JANELA = Duration.ofHours(1);
+    private static final int TROCA_EMAIL_TOKEN_VALID_HOURS = 24;
 
     @Autowired
     private UserRepository userRepository;
@@ -164,6 +167,54 @@ public class UserService {
         }
 
         accountDeletionService.excluirConta(user.getId());
+        }
+
+        // Troca de e-mail nunca é imediata: fica pendente até a pessoa clicar
+        // no link enviado para o e-mail NOVO (prova que ela tem acesso a ele).
+        // Sem isso, alguém podia trocar o e-mail de uma conta pra um endereço
+        // que não é dela e sequestrar o fluxo de "esqueci minha senha" de outro
+        // serviço, ou simplesmente travar o dono de fora da própria conta.
+        @Transactional
+        public void solicitarTrocaEmail(Long userId, String novoEmail) {
+        if (!rateLimiter.permitir("trocar-email:" + userId, TROCA_EMAIL_MAX_TENTATIVAS, TROCA_EMAIL_JANELA)) {
+            throw new IllegalStateException("Muitas tentativas de troca de e-mail. Aguarde um pouco antes de tentar de novo.");
+        }
+        validarEmail(novoEmail);
+
+        User user = buscarPorId(userId);
+        if (novoEmail.equalsIgnoreCase(user.getEmail())) {
+            throw new IllegalStateException("Esse já é o seu e-mail atual.");
+        }
+        if (userRepository.existsByEmail(novoEmail)) {
+            throw new IllegalStateException("Email já está cadastrado!");
+        }
+
+        String token = UUID.randomUUID().toString();
+        user.setPendingEmail(novoEmail);
+        user.setEmailChangeToken(token);
+        user.setEmailChangeTokenExpiry(LocalDateTime.now().plusHours(TROCA_EMAIL_TOKEN_VALID_HOURS));
+        userRepository.save(user);
+        emailService.enviarEmailTrocaEmail(novoEmail, token);
+        }
+
+        @Transactional
+        public void confirmarTrocaEmail(String token) {
+        User user = userRepository.findByEmailChangeToken(token)
+                .orElseThrow(() -> new IllegalStateException("Link de troca de e-mail inválido."));
+
+        if (user.getEmailChangeTokenExpiry() == null || user.getEmailChangeTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Link de troca de e-mail expirado. Solicite novamente em Configurações.");
+        }
+        // Alguém pode ter cadastrado esse e-mail entre o pedido e a confirmação.
+        if (userRepository.existsByEmail(user.getPendingEmail())) {
+            throw new IllegalStateException("Esse e-mail já está em uso.");
+        }
+
+        user.setEmail(user.getPendingEmail());
+        user.setPendingEmail(null);
+        user.setEmailChangeToken(null);
+        user.setEmailChangeTokenExpiry(null);
+        userRepository.save(user);
         }
 
         public User buscarPorId(Long id){

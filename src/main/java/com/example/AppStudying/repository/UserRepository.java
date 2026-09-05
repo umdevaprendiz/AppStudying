@@ -20,6 +20,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByDeletionToken(String deletionToken);
 
+    Optional<User> findByEmailChangeToken(String emailChangeToken);
+
     @Query("SELECT u.id FROM User u WHERE COALESCE(u.lastLoginAt, u.createdAt) < :limite")
     List<Long> findIdsInativosDesde(@Param("limite") LocalDateTime limite);
 

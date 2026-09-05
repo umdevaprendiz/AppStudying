@@ -9,6 +9,7 @@ import { Profile } from "./pages/Profile";
 import { VerifyEmail } from "./pages/VerifyEmail";
 import { Settings } from "./pages/Settings";
 import { DeleteAccount } from "./pages/DeleteAccount";
+import { ConfirmEmailChange } from "./pages/ConfirmEmailChange";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/delete-account" element={<DeleteAccount />} />
+      <Route path="/confirmar-troca-email" element={<ConfirmEmailChange />} />
       <Route
         path="/dashboard"
         element={

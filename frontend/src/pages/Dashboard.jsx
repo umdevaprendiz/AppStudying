@@ -6,6 +6,7 @@ import { useAuth } from "../context/auth-context";
 import { ChatModal } from "../components/ChatModal";
 import { InboxDrawer } from "../components/InboxDrawer";
 import { MatterTopics } from "../components/MatterTopics";
+import { useTheme } from "../hooks/useTheme";
 
 function notificationText(studyRequest) {
   if (studyRequest.status === "PENDENTE") {
@@ -31,6 +32,7 @@ function formatElapsed(inicioISO, nowMs) {
 export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [connected, setConnected] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -252,6 +254,14 @@ export function Dashboard() {
           <span className={`ws-status ${connected ? "connected" : ""}`}>
             {connected ? "conectado" : "conectando..."}
           </span>
+          <button
+            type="button"
+            className="secondary"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+          >
+            {theme === "dark" ? "Tema claro" : "Tema escuro"}
+          </button>
           <button className="secondary" onClick={() => navigate("/settings")}>Configurações</button>
           <button className="secondary" onClick={handleLogout}>Sair</button>
         </div>
