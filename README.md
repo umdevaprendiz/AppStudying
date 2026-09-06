@@ -51,11 +51,20 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] Ícone de mensagens com contador de não lidos em tempo real, abrindo um painel com solicitações recebidas e conversas ativas
 - [x] Notificações em tempo real via WebSocket (STOMP + SockJS) para solicitações de estudo, solicitações de mensagem e novas mensagens
 
+**Grupos de estudo**
+- [x] Criação de grupos (`Group`) com dono e limite de 30 membros aceitos
+- [x] Convite, aceite e recusa de membros (`GroupMember`), reaproveitando o mesmo enum `RequestStatus` de `StudyRequest`/`Conversation` — reenviar convite para quem recusou reaproveita a mesma linha em vez de duplicar
+- [x] Sala do grupo com **presença ao vivo**: mostra o que cada membro está estudando agora (matéria e tópico) e desde quando, atualizado via WebSocket sempre que alguém inicia ou encerra uma sessão de estudo (`/topic/group-presence/{id}`)
+- [x] Chat próprio do grupo (`GroupMessage`), separado do chat 1:1, com histórico persistido
+- [x] Sair do grupo, remover um membro (só o dono) e excluir o grupo (só o dono) — o dono não pode sair, precisa excluir
+- [x] Telas dedicadas no front-end: `/groups` (lista de grupos e convites pendentes) e `/groups/:id` (sala com presença e chat)
+
 **Segurança**
 - [x] Autenticação real via Spring Security com sessão persistida em banco (`spring-session-jdbc`) — login estabelece uma sessão, cookie `SESSION` autentica as próximas requisições
 - [x] Todas as rotas exigem autenticação, exceto cadastro, login, verificação/exclusão de conta por token e a documentação Swagger
 - [x] Autorização por dono do recurso em todos os endpoints sensíveis — cada usuário só age sobre os próprios dados (sessões de estudo, mensagens, solicitações, matérias, tópicos, eventos da linha do tempo); a identidade vem da sessão autenticada, nunca de um parâmetro enviado pelo cliente
 - [x] Assinaturas do WebSocket também são validadas: não dá para se inscrever no tópico de notificação de outro usuário
+- [x] Autorização por associação nos grupos: só membro aceito acessa a sala, convida ou manda mensagem; ações de dono (remover membro, excluir grupo) exigem ser o dono do grupo
 - [x] Limite de tentativas (rate limiting) em login, reenvio de verificação de e-mail e solicitação de exclusão de conta — evita força bruta de senha e spam de e-mail
 - [x] Hash da senha nunca é serializado nas respostas da API (`@JsonProperty(WRITE_ONLY)`)
 - [x] Proteção contra mass assignment no cadastro de usuário e criação de matéria (o `id` enviado pelo cliente é sempre ignorado)
@@ -157,19 +166,20 @@ AppStudying/
 │   ├── webSocketConfig/      # Configuração do broker STOMP (/topic, /app, endpoint /ws)
 │   ├── controllers/          # UserController, MatterController, TopicController,
 │   │                         # StudyRequestController, StudySessionController, ChatController,
-│   │                         # TimeLineController, CsrfController, SpaForwardController
+│   │                         # GroupController, TimeLineController, CsrfController, SpaForwardController
 │   ├── services/             # Regras de negócio de cada domínio, incluindo EmailService
-│   │                         # (Brevo), AccountDeletionService (exclusão em cascata) e
+│   │                         # (Brevo), GroupService (grupos, convites, presença, chat),
+│   │                         # AccountDeletionService (exclusão em cascata) e
 │   │                         # AccountCleanupScheduler (expurgo diário de contas inativas)
 │   ├── security/              # CurrentUser, CustomUserDetails(Service), RateLimiterService
 │   ├── repository/           # Interfaces JpaRepository
 │   ├── model/                # User, Matter, Topic, StudySession, StudyRequest,
-│   │                         # Conversation, ChatMessage, TimeLine
+│   │                         # Conversation, ChatMessage, TimeLine, Group, GroupMember, GroupMessage
 │   ├── enums/                # RequestStatus, TypeStatus
-│   └── dto/                  # MatterStudySummaryDTO, etc.
+│   └── dto/                  # MatterStudySummaryDTO, GroupSummaryDTO, GroupMemberPresenceDTO, etc.
 ├── src/main/resources/
 │   ├── application.properties, application-prod.properties
-│   └── db/migration/         # Migrations versionadas (Flyway, V1 a V4)
+│   └── db/migration/         # Migrations versionadas (Flyway, V1 a V6)
 ├── src/test/java/...         # Testes unitários e de integração (JUnit 5 + Mockito + MockMvc)
 ├── frontend/
 │   └── src/
@@ -177,7 +187,7 @@ AppStudying/
 │       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer, MatterTopics
 │       ├── context/          # AuthContext (usuário logado via localStorage)
 │       └── pages/            # Login, Register, VerifyEmail, Dashboard, Profile,
-│                              # Settings, DeleteAccount
+│                              # Settings, DeleteAccount, Groups, GroupRoom
 ├── .github/workflows/ci.yml  # CI: testes com MySQL real, lint/build do frontend, build da imagem
 ├── Dockerfile                 # Build multi-stage: frontend + backend num único container
 ├── compose.yaml               # Serviço MySQL com volume nomeado (uso local/CI)
