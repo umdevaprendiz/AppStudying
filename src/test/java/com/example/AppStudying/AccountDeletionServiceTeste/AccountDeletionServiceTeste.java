@@ -2,6 +2,9 @@ package com.example.AppStudying.AccountDeletionServiceTeste;
 
 import com.example.AppStudying.repository.ChatMessageRepository;
 import com.example.AppStudying.repository.ConversationRepository;
+import com.example.AppStudying.repository.GroupMemberRepository;
+import com.example.AppStudying.repository.GroupMessageRepository;
+import com.example.AppStudying.repository.GroupRepository;
 import com.example.AppStudying.repository.MatterRepository;
 import com.example.AppStudying.repository.StudyRequestRepository;
 import com.example.AppStudying.repository.StudySessionRepository;
@@ -40,6 +43,12 @@ public class AccountDeletionServiceTeste {
     @Mock
     private TimeLineRepository timeLineRepository;
     @Mock
+    private GroupMessageRepository groupMessageRepository;
+    @Mock
+    private GroupMemberRepository groupMemberRepository;
+    @Mock
+    private GroupRepository groupRepository;
+    @Mock
     private UserRepository userRepository;
 
     @Test
@@ -50,9 +59,11 @@ public class AccountDeletionServiceTeste {
 
         // A ordem importa: nenhuma FK do banco tem ON DELETE CASCADE, então
         // filhos precisam sumir antes dos pais (sessão/pedido antes de
-        // tópico/matéria, mensagem antes de conversa, tudo antes do usuário).
+        // tópico/matéria, mensagem antes de conversa, grupos que ela é dona
+        // antes do próprio grupo, tudo antes do usuário).
         InOrder ordem = inOrder(studySessionRepository, studyRequestRepository, topicRepository,
-                matterRepository, chatMessageRepository, conversationRepository, timeLineRepository, userRepository);
+                matterRepository, chatMessageRepository, conversationRepository, timeLineRepository,
+                groupMessageRepository, groupMemberRepository, groupRepository, userRepository);
 
         ordem.verify(studySessionRepository).deleteByUserId(userId);
         ordem.verify(studyRequestRepository).deleteEnvolvendoUsuario(userId);
@@ -61,6 +72,11 @@ public class AccountDeletionServiceTeste {
         ordem.verify(chatMessageRepository).deleteEnvolvendoUsuario(userId);
         ordem.verify(conversationRepository).deleteEnvolvendoUsuario(userId);
         ordem.verify(timeLineRepository).deleteByUserId(userId);
+        ordem.verify(groupMessageRepository).deleteByGroupOwnerId(userId);
+        ordem.verify(groupMemberRepository).deleteByGroupOwnerId(userId);
+        ordem.verify(groupRepository).deleteByOwnerId(userId);
+        ordem.verify(groupMessageRepository).deleteBySenderId(userId);
+        ordem.verify(groupMemberRepository).deleteByUserId(userId);
         ordem.verify(userRepository).deleteById(userId);
 
         verify(userRepository).deleteById(userId);

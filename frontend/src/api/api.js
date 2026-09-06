@@ -142,4 +142,48 @@ export const Api = {
   contarMensagensNaoLidas(userId) {
     return request("GET", `/api/chat/contagem/${userId}`);
   },
+
+  // Groups
+  criarGrupo(name) {
+    return request("POST", "/api/groups", { params: { name } });
+  },
+  listarMeusGrupos(userId) {
+    return request("GET", `/api/groups/meus/${userId}`);
+  },
+  buscarResumoGrupo(id) {
+    return request("GET", `/api/groups/${id}`);
+  },
+  excluirGrupo(id) {
+    return request("DELETE", `/api/groups/${id}`);
+  },
+  sairDoGrupo(id) {
+    return request("PUT", `/api/groups/${id}/sair`);
+  },
+  convidarParaGrupo(id, userId) {
+    return request("POST", `/api/groups/${id}/convidar`, { params: { userId } });
+  },
+  removerMembroDoGrupo(id, userId) {
+    return request("DELETE", `/api/groups/${id}/membros/${userId}`);
+  },
+  listarPresencaGrupo(id) {
+    return request("GET", `/api/groups/${id}/presenca`);
+  },
+  listarConvitesDeGrupo(userId) {
+    return request("GET", `/api/groups/convites/${userId}`);
+  },
+  listarConvitesPendentesDoGrupo(id) {
+    return request("GET", `/api/groups/${id}/convites-pendentes`);
+  },
+  aceitarConviteDeGrupo(id) {
+    return request("PUT", `/api/groups/convites/${id}/aceitar`);
+  },
+  recusarConviteDeGrupo(id) {
+    return request("PUT", `/api/groups/convites/${id}/recusar`);
+  },
+  enviarMensagemGrupo(id, content) {
+    return request("POST", `/api/groups/${id}/mensagens`, { params: { content } });
+  },
+  listarMensagensGrupo(id) {
+    return request("GET", `/api/groups/${id}/mensagens`);
+  },
 };

@@ -9,6 +9,7 @@ import com.example.AppStudying.repository.MatterRepository;
 import com.example.AppStudying.repository.StudySessionRepository;
 import com.example.AppStudying.repository.TopicRepository;
 import com.example.AppStudying.repository.UserRepository;
+import com.example.AppStudying.services.GroupService;
 import com.example.AppStudying.services.StudySessionService;
 import com.example.AppStudying.services.TimeLineService;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,9 @@ public class StudySessionServiceTeste {
 
     @Mock
     private TimeLineService timeLineService;
+
+    @Mock
+    private GroupService groupService;
 
     @InjectMocks
     private StudySessionService studySessionService;
@@ -86,6 +90,7 @@ public class StudySessionServiceTeste {
         verify(matterRepository, times(1)).findById(matterId);
         verify(topicRepository, times(1)).findById(topicId);
         verify(studySessionRepository, times(1)).save(any(StudySession.class));
+        verify(groupService, times(1)).notificarSessaoAlterada(userId);
     }
 
     @Test
@@ -214,6 +219,7 @@ public class StudySessionServiceTeste {
         verify(studySessionRepository, times(1)).findById(sessionId);
         verify(studySessionRepository, times(1)).save(studySession);
         verify(timeLineService, times(1)).criarEvento(anyString(), eq(userId));
+        verify(groupService, times(1)).notificarSessaoAlterada(userId);
     }
 
     @Test

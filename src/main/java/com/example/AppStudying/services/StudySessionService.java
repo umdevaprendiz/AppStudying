@@ -37,6 +37,9 @@ public class StudySessionService {
     @Autowired
     private TimeLineService timeLineService;
 
+    @Autowired
+    private GroupService groupService;
+
     public StudySession iniciarSessao(Long userId, Long matterId, Long topicId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("Usuário não encontrado"));
@@ -55,7 +58,9 @@ public class StudySessionService {
         studySession.setMatter(matter);
         studySession.setInicio(LocalDateTime.now());
 
-        return studySessionRepository.save(studySession);
+        StudySession salva = studySessionRepository.save(studySession);
+        groupService.notificarSessaoAlterada(userId);
+        return salva;
     }
 
     public StudySession encerrarSessao(Long sessionId, Long currentUserId) {
@@ -77,6 +82,7 @@ public class StudySessionService {
                 "Sessão de estudo: " + nomeMatter + " (" + minutos + " min)",
                 salva.getUser().getId()
         );
+        groupService.notificarSessaoAlterada(salva.getUser().getId());
 
         return salva;
     }
