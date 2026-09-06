@@ -2,6 +2,9 @@ package com.example.AppStudying.services;
 
 import com.example.AppStudying.repository.ChatMessageRepository;
 import com.example.AppStudying.repository.ConversationRepository;
+import com.example.AppStudying.repository.GroupMemberRepository;
+import com.example.AppStudying.repository.GroupMessageRepository;
+import com.example.AppStudying.repository.GroupRepository;
 import com.example.AppStudying.repository.MatterRepository;
 import com.example.AppStudying.repository.StudyRequestRepository;
 import com.example.AppStudying.repository.StudySessionRepository;
@@ -36,6 +39,12 @@ public class AccountDeletionService {
     @Autowired
     private TimeLineRepository timeLineRepository;
     @Autowired
+    private GroupMessageRepository groupMessageRepository;
+    @Autowired
+    private GroupMemberRepository groupMemberRepository;
+    @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
     private UserRepository userRepository;
 
     @Transactional
@@ -47,6 +56,14 @@ public class AccountDeletionService {
         chatMessageRepository.deleteEnvolvendoUsuario(userId);
         conversationRepository.deleteEnvolvendoUsuario(userId);
         timeLineRepository.deleteByUserId(userId);
+        // Grupos que essa pessoa é dona: mensagens e membros somem antes do
+        // grupo em si (mesma regra de filhos-antes-dos-pais). Depois, a
+        // participação dela em grupos de outras pessoas.
+        groupMessageRepository.deleteByGroupOwnerId(userId);
+        groupMemberRepository.deleteByGroupOwnerId(userId);
+        groupRepository.deleteByOwnerId(userId);
+        groupMessageRepository.deleteBySenderId(userId);
+        groupMemberRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
     }
 }

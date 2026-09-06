@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface StudySessionRepository extends JpaRepository<StudySession, Long> {
     List<StudySession> findByUserId(Long userId);
     Optional<StudySession> findByUserIdAndMatterIdAndFimIsNull(Long userId, Long matterId);
+    Optional<StudySession> findFirstByUserIdAndFimIsNullOrderByInicioDesc(Long userId);
 
     @Modifying
     @Query("DELETE FROM StudySession s WHERE s.user.id = :userId")

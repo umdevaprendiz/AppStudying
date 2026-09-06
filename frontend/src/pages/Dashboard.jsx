@@ -262,6 +262,7 @@ export function Dashboard() {
           >
             {theme === "dark" ? "Tema claro" : "Tema escuro"}
           </button>
+          <button className="secondary" onClick={() => navigate("/groups")}>Grupos</button>
           <button className="secondary" onClick={() => navigate("/settings")}>Configurações</button>
           <button className="secondary" onClick={handleLogout}>Sair</button>
         </div>
