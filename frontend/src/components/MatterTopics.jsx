@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
-
-const STATUS_LABEL = {
-  PENDENTE: "Pendente",
-  EM_ANDAMENTO: "Em andamento",
-  CONCLUIDO: "Concluído",
-};
 
 const STATUS_ORDER = ["PENDENTE", "EM_ANDAMENTO", "CONCLUIDO"];
 
 export function MatterTopics({ matterId }) {
+  const { t } = useTranslation();
   const [topics, setTopics] = useState([]);
   const [nome, setNome] = useState("");
   const [error, setError] = useState("");
@@ -21,8 +17,8 @@ export function MatterTopics({ matterId }) {
   useEffect(() => {
     Api.listarTopicsPorMatter(matterId)
       .then(setTopics)
-      .catch((err) => setError(err.message || "Não foi possível carregar os tópicos."));
-  }, [matterId]);
+      .catch((err) => setError(err.message || t("matterTopics.loadError")));
+  }, [matterId, t]);
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -32,7 +28,7 @@ export function MatterTopics({ matterId }) {
       setNome("");
       await load();
     } catch (err) {
-      setError(err.message || "Não foi possível adicionar o tópico.");
+      setError(err.message || t("matterTopics.addError"));
     }
   }
 
@@ -43,7 +39,7 @@ export function MatterTopics({ matterId }) {
       await Api.atualizarTopic(topic.id, topic.nome, nextStatus);
       await load();
     } catch (err) {
-      setError(err.message || "Não foi possível atualizar o tópico.");
+      setError(err.message || t("matterTopics.updateError"));
     }
   }
 
@@ -52,7 +48,7 @@ export function MatterTopics({ matterId }) {
       await Api.excluirTopic(id);
       await load();
     } catch (err) {
-      setError(err.message || "Não foi possível remover o tópico.");
+      setError(err.message || t("matterTopics.removeError"));
     }
   }
 
@@ -61,31 +57,31 @@ export function MatterTopics({ matterId }) {
       <form className="inline-form" onSubmit={handleAdd}>
         <input
           type="text"
-          placeholder="Novo tópico"
+          placeholder={t("matterTopics.newTopicPlaceholder")}
           value={nome}
           onChange={(e) => setNome(e.target.value)}
         />
-        <button type="submit">Adicionar</button>
+        <button type="submit">{t("common.add")}</button>
       </form>
 
       {error && <div className="error-msg">{error}</div>}
 
       <ul className="list">
-        {topics.length === 0 && <li className="empty">Nenhum tópico ainda.</li>}
-        {topics.map((t) => (
-          <li key={t.id}>
+        {topics.length === 0 && <li className="empty">{t("matterTopics.noTopics")}</li>}
+        {topics.map((tItem) => (
+          <li key={tItem.id}>
             <div className="item-main">
-              <strong>{t.nome}</strong>
+              <strong>{tItem.nome}</strong>
             </div>
             <button
               type="button"
-              className={`badge ${t.status}`}
-              onClick={() => handleCycleStatus(t)}
-              title="Clique para mudar o status"
+              className={`badge ${tItem.status}`}
+              onClick={() => handleCycleStatus(tItem)}
+              title={t("matterTopics.clickToChangeStatus")}
             >
-              {STATUS_LABEL[t.status] ?? t.status}
+              {t(`status.${tItem.status}`, tItem.status)}
             </button>
-            <button className="danger" onClick={() => handleDelete(t.id)}>Remover</button>
+            <button className="danger" onClick={() => handleDelete(tItem.id)}>{t("common.remove")}</button>
           </li>
         ))}
       </ul>

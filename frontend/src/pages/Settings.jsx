@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { useAuth } from "../context/auth-context";
 import { useTheme } from "../hooks/useTheme";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 export function Settings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -29,9 +32,9 @@ export function Settings() {
       await Api.alterarSenha(user.id, senhaAtual, novaSenha);
       setSenhaAtual("");
       setNovaSenha("");
-      setSenhaMsg("Senha alterada com sucesso.");
+      setSenhaMsg(t("settings.passwordChanged"));
     } catch (err) {
-      setSenhaError(err.message || "Não foi possível alterar a senha.");
+      setSenhaError(err.message || t("settings.passwordChangeError"));
     }
   }
 
@@ -43,106 +46,106 @@ export function Settings() {
       setEmailSolicitado(novoEmail);
       setNovoEmail("");
     } catch (err) {
-      setEmailError(err.message || "Não foi possível solicitar a troca de e-mail.");
+      setEmailError(err.message || t("settings.emailChangeError"));
     }
   }
 
   async function handleSolicitarExclusao() {
     setExclusaoError("");
-    const confirmou = window.confirm(
-      "Vamos enviar um e-mail de confirmação. Sua conta só é excluída depois que você clicar no link. Continuar?"
-    );
+    const confirmou = window.confirm(t("settings.deleteConfirm"));
     if (!confirmou) return;
 
     try {
       await Api.solicitarExclusaoConta();
       setExclusaoSolicitada(true);
     } catch (err) {
-      setExclusaoError(err.message || "Não foi possível solicitar a exclusão.");
+      setExclusaoError(err.message || t("settings.deleteError"));
     }
   }
 
   return (
     <>
       <header className="topbar">
-        <div className="brand">AppStudying</div>
-        <button className="secondary" onClick={() => navigate(-1)}>Voltar</button>
+        <div className="brand">{t("common.appName")}</div>
+        <button className="secondary" onClick={() => navigate(-1)}>{t("profile.back")}</button>
       </header>
 
       <main className="profile-main">
         <section className="panel wide">
-          <h2>Aparência</h2>
+          <h2>{t("settings.appearance")}</h2>
           <p className="hint" style={{ textAlign: "left", marginTop: 0 }}>
-            Escolha como o AppStudying aparece pra você neste dispositivo.
+            {t("settings.appearanceHint")}
           </p>
           <button type="button" className="secondary" onClick={toggleTheme}>
-            {theme === "dark" ? "Usar tema claro" : "Usar tema escuro"}
+            {theme === "dark" ? t("settings.useLightTheme") : t("settings.useDarkTheme")}
           </button>
         </section>
 
         <section className="panel wide">
-          <h2>Trocar senha</h2>
+          <h2>{t("settings.language")}</h2>
+          <p className="hint" style={{ textAlign: "left", marginTop: 0 }}>
+            {t("settings.languageHint")}
+          </p>
+          <LanguageSwitcher />
+        </section>
+
+        <section className="panel wide">
+          <h2>{t("settings.changePassword")}</h2>
           <form className="inline-form" onSubmit={handleTrocarSenha}>
             <input
               type="password"
-              placeholder="Senha atual"
+              placeholder={t("settings.currentPassword")}
               value={senhaAtual}
               onChange={(e) => setSenhaAtual(e.target.value)}
               required
             />
             <input
               type="password"
-              placeholder="Nova senha"
+              placeholder={t("settings.newPassword")}
               value={novaSenha}
               onChange={(e) => setNovaSenha(e.target.value)}
               required
             />
-            <button type="submit">Salvar</button>
+            <button type="submit">{t("common.save")}</button>
           </form>
           {senhaMsg && <p className="hint">{senhaMsg}</p>}
           {senhaError && <div className="error-msg">{senhaError}</div>}
         </section>
 
         <section className="panel wide">
-          <h2>Trocar e-mail</h2>
+          <h2>{t("settings.changeEmail")}</h2>
           <p className="hint" style={{ textAlign: "left", marginTop: 0 }}>
-            E-mail atual: <strong>{user.email}</strong>
+            {t("settings.currentEmail")}: <strong>{user.email}</strong>
           </p>
           {emailSolicitado ? (
             <p className="hint">
-              Enviamos um e-mail de confirmação para <strong>{emailSolicitado}</strong>.
-              Seu e-mail só muda depois que você clicar no link recebido lá.
+              <Trans i18nKey="settings.emailChangeRequested" values={{ email: emailSolicitado }} components={{ 1: <strong /> }} />
             </p>
           ) : (
             <form className="inline-form" onSubmit={handleTrocarEmail}>
               <input
                 type="email"
-                placeholder="Novo e-mail"
+                placeholder={t("settings.newEmailPlaceholder")}
                 value={novoEmail}
                 onChange={(e) => setNovoEmail(e.target.value)}
                 required
               />
-              <button type="submit">Solicitar troca</button>
+              <button type="submit">{t("settings.requestChange")}</button>
             </form>
           )}
           {emailError && <div className="error-msg">{emailError}</div>}
         </section>
 
         <section className="panel wide">
-          <h2>Zona de perigo</h2>
+          <h2>{t("settings.dangerZone")}</h2>
           {exclusaoSolicitada ? (
             <p className="hint">
-              Enviamos um e-mail de confirmação para <strong>{user.email}</strong>.
-              Sua conta só será excluída depois que você clicar no link recebido.
+              <Trans i18nKey="settings.deleteRequested" values={{ email: user.email }} components={{ 1: <strong /> }} />
             </p>
           ) : (
             <>
-              <p className="hint">
-                Excluir sua conta apaga permanentemente todos os seus dados
-                (matérias, tópicos, sessões de estudo, conversas). Essa ação
-                não pode ser desfeita.
-              </p>
-              <button className="danger" onClick={handleSolicitarExclusao}>Excluir minha conta</button>
+              <p className="hint">{t("settings.deleteWarning")}</p>
+              <button className="danger" onClick={handleSolicitarExclusao}>{t("settings.deleteButton")}</button>
               {exclusaoError && <div className="error-msg">{exclusaoError}</div>}
             </>
           )}

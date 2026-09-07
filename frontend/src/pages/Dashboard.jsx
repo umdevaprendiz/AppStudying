@@ -1,25 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { connectStudyRequestSocket, connectChatSocket, connectInboxSocket } from "../api/ws";
 import { useAuth } from "../context/auth-context";
 import { ChatModal } from "../components/ChatModal";
 import { InboxDrawer } from "../components/InboxDrawer";
 import { MatterTopics } from "../components/MatterTopics";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useTheme } from "../hooks/useTheme";
-
-function notificationText(studyRequest) {
-  if (studyRequest.status === "PENDENTE") {
-    return `Nova solicitação de estudo de ${studyRequest.requester?.name ?? "alguém"}`;
-  }
-  if (studyRequest.status === "ACEITA") {
-    return `${studyRequest.receiver?.name ?? "Alguém"} aceitou sua solicitação de estudo`;
-  }
-  if (studyRequest.status === "RECUSADA") {
-    return `${studyRequest.receiver?.name ?? "Alguém"} recusou sua solicitação de estudo`;
-  }
-  return "Atualização em uma solicitação de estudo";
-}
+import { dateLocale } from "../i18n/dateLocale";
 
 function formatElapsed(inicioISO, nowMs) {
   const diff = Math.max(0, nowMs - new Date(inicioISO).getTime());
@@ -33,6 +23,7 @@ export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const [connected, setConnected] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -58,6 +49,19 @@ export function Dashboard() {
 
   const clientRef = useRef(null);
   const chatClientRef = useRef(null);
+
+  function notificationText(studyRequest) {
+    if (studyRequest.status === "PENDENTE") {
+      return t("dashboard.notification.pending", { name: studyRequest.requester?.name ?? t("common.someone") });
+    }
+    if (studyRequest.status === "ACEITA") {
+      return t("dashboard.notification.accepted", { name: studyRequest.receiver?.name ?? t("common.someone") });
+    }
+    if (studyRequest.status === "RECUSADA") {
+      return t("dashboard.notification.declined", { name: studyRequest.receiver?.name ?? t("common.someone") });
+    }
+    return t("dashboard.notification.generic");
+  }
 
   const loadMatters = useCallback(async () => {
     const list = await Api.listarMattersPorUsuario(user.id);
@@ -91,7 +95,7 @@ export function Dashboard() {
   function showToast(text) {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, text }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 6000);
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 6000);
   }
 
   useEffect(() => {
@@ -99,10 +103,11 @@ export function Dashboard() {
       try {
         await Promise.all([loadMatters(), loadReceived(), loadSent(), loadEvents(), loadSuggestions()]);
       } catch (err) {
-        showToast(err.message || "Não foi possível carregar todos os dados da página. Tente recarregar.");
+        showToast(err.message || t("dashboard.loadPageError"));
       }
     }
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadMatters, loadReceived, loadSent, loadEvents, loadSuggestions]);
 
   useEffect(() => {
@@ -125,6 +130,7 @@ export function Dashboard() {
     });
     clientRef.current = client;
     return () => client.deactivate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, loadReceived, loadSent]);
 
   useEffect(() => {
@@ -181,7 +187,7 @@ export function Dashboard() {
       setRequestForm({ receiverEmail: "", matterId: "", message: "" });
       await loadSent();
     } catch (err) {
-      setRequestError(err.message || "Não foi possível enviar a solicitação.");
+      setRequestError(err.message || t("dashboard.sendRequestError"));
     }
   }
 
@@ -227,7 +233,7 @@ export function Dashboard() {
     try {
       await Api.enviarMensagem(openChatWith.id, text);
     } catch (err) {
-      showToast(err.message || "Não foi possível enviar a mensagem.");
+      showToast(err.message || t("dashboard.sendMessageError"));
     }
   }
 
@@ -242,47 +248,48 @@ export function Dashboard() {
   return (
     <>
       <div id="toastContainer">
-        {toasts.map((t) => (
-          <div className="toast" key={t.id}>{t.text}</div>
+        {toasts.map((toast) => (
+          <div className="toast" key={toast.id}>{toast.text}</div>
         ))}
       </div>
 
       <header className="topbar">
-        <div className="brand">AppStudying</div>
+        <div className="brand">{t("common.appName")}</div>
         <div className="user-info">
           <span>{user.name} ({user.email})</span>
           <span className={`ws-status ${connected ? "connected" : ""}`}>
-            {connected ? "conectado" : "conectando..."}
+            {connected ? t("common.connected") : t("common.connecting")}
           </span>
+          <LanguageSwitcher />
           <button
             type="button"
             className="secondary"
             onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+            aria-label={theme === "dark" ? t("common.lightTheme") : t("common.darkTheme")}
           >
-            {theme === "dark" ? "Tema claro" : "Tema escuro"}
+            {theme === "dark" ? t("common.lightTheme") : t("common.darkTheme")}
           </button>
-          <button className="secondary" onClick={() => navigate("/groups")}>Grupos</button>
-          <button className="secondary" onClick={() => navigate("/settings")}>Configurações</button>
-          <button className="secondary" onClick={handleLogout}>Sair</button>
+          <button className="secondary" onClick={() => navigate("/groups")}>{t("common.groups")}</button>
+          <button className="secondary" onClick={() => navigate("/settings")}>{t("common.settings")}</button>
+          <button className="secondary" onClick={handleLogout}>{t("common.logout")}</button>
         </div>
       </header>
 
       <main>
         <section className="panel">
-          <h2>Minhas matérias</h2>
+          <h2>{t("dashboard.myMatters")}</h2>
           <form className="inline-form" onSubmit={handleCreateMatter}>
             <input
               type="text"
-              placeholder="Nome da matéria"
+              placeholder={t("dashboard.matterNamePlaceholder")}
               value={matterName}
               onChange={(e) => setMatterName(e.target.value)}
               required
             />
-            <button type="submit">Adicionar</button>
+            <button type="submit">{t("common.add")}</button>
           </form>
           <ul className="list">
-            {matters.length === 0 && <li className="empty">Nada por aqui ainda.</li>}
+            {matters.length === 0 && <li className="empty">{t("dashboard.nothingHere")}</li>}
             {matters.map((m) => {
               const active = activeSessions[m.id];
               const expanded = expandedMatterId === m.id;
@@ -293,16 +300,16 @@ export function Dashboard() {
                     {active ? (
                       <>
                         <span className="timer-display">{formatElapsed(active.inicio, now)}</span>
-                        <button className="danger" onClick={() => handleStopTimer(m.id)}>Parar</button>
+                        <button className="danger" onClick={() => handleStopTimer(m.id)}>{t("dashboard.stop")}</button>
                       </>
                     ) : (
-                      <button onClick={() => handleStartTimer(m.id)}>Iniciar cronômetro</button>
+                      <button onClick={() => handleStartTimer(m.id)}>{t("dashboard.startTimer")}</button>
                     )}
                     <button
                       className="secondary"
                       onClick={() => setExpandedMatterId(expanded ? null : m.id)}
                     >
-                      {expanded ? "Ocultar tópicos" : "Tópicos"}
+                      {expanded ? t("dashboard.hideTopics") : t("dashboard.topics")}
                     </button>
                   </div>
                   {expanded && <MatterTopics matterId={m.id} />}
@@ -313,9 +320,9 @@ export function Dashboard() {
         </section>
 
         <section className="panel wide">
-          <h2>Pessoas para conhecer</h2>
+          <h2>{t("dashboard.peopleToMeet")}</h2>
           <div className="people-grid">
-            {suggestions.length === 0 && <div className="empty">Nenhuma sugestão por enquanto.</div>}
+            {suggestions.length === 0 && <div className="empty">{t("dashboard.noSuggestions")}</div>}
             {suggestions.map((s) => (
               <button
                 type="button"
@@ -331,9 +338,9 @@ export function Dashboard() {
         </section>
 
         <section className="panel">
-          <h2>Enviar solicitação de estudo</h2>
+          <h2>{t("dashboard.sendStudyRequest")}</h2>
           <form className="inline-form" style={{ flexDirection: "column", alignItems: "stretch" }} onSubmit={handleSendRequest}>
-            <label htmlFor="receiverEmail">E-mail do destinatário</label>
+            <label htmlFor="receiverEmail">{t("dashboard.recipientEmail")}</label>
             <input
               id="receiverEmail"
               type="email"
@@ -342,19 +349,19 @@ export function Dashboard() {
               required
             />
 
-            <label htmlFor="matterSelect">Matéria (opcional)</label>
+            <label htmlFor="matterSelect">{t("dashboard.matterOptional")}</label>
             <select
               id="matterSelect"
               value={requestForm.matterId}
               onChange={(e) => setRequestForm((p) => ({ ...p, matterId: e.target.value }))}
             >
-              <option value="">Nenhuma</option>
+              <option value="">{t("dashboard.none")}</option>
               {matters.map((m) => (
                 <option key={m.id} value={m.id}>{m.nome}</option>
               ))}
             </select>
 
-            <label htmlFor="requestMessage">Mensagem (opcional)</label>
+            <label htmlFor="requestMessage">{t("dashboard.messageOptional")}</label>
             <textarea
               id="requestMessage"
               rows={2}
@@ -362,15 +369,15 @@ export function Dashboard() {
               onChange={(e) => setRequestForm((p) => ({ ...p, message: e.target.value }))}
             />
 
-            <button type="submit" className="full-width">Enviar solicitação</button>
+            <button type="submit" className="full-width">{t("dashboard.sendRequestButton")}</button>
             <div className="error-msg">{requestError}</div>
           </form>
         </section>
 
         <section className="panel wide">
-          <h2>Solicitações recebidas</h2>
+          <h2>{t("dashboard.requestsReceived")}</h2>
           <ul className="list">
-            {received.length === 0 && <li className="empty">Nada por aqui ainda.</li>}
+            {received.length === 0 && <li className="empty">{t("dashboard.nothingHere")}</li>}
             {received.map((r) => (
               <li key={r.id}>
                 <div className="item-main">
@@ -379,15 +386,15 @@ export function Dashboard() {
                       {r.requester.name}
                     </button>
                   ) : (
-                    <strong>Usuário</strong>
+                    <strong>{t("common.user")}</strong>
                   )}
                   <span>{r.message ?? ""}</span>
                 </div>
-                <span className={`badge ${r.status}`}>{r.status}</span>
+                <span className={`badge ${r.status}`}>{t(`status.${r.status}`, r.status)}</span>
                 {r.status === "PENDENTE" && (
                   <div className="actions">
-                    <button onClick={() => respond(r.id, true)}>Aceitar</button>
-                    <button className="danger" onClick={() => respond(r.id, false)}>Recusar</button>
+                    <button onClick={() => respond(r.id, true)}>{t("common.accept")}</button>
+                    <button className="danger" onClick={() => respond(r.id, false)}>{t("common.decline")}</button>
                   </div>
                 )}
               </li>
@@ -396,46 +403,46 @@ export function Dashboard() {
         </section>
 
         <section className="panel wide">
-          <h2>Solicitações enviadas</h2>
+          <h2>{t("dashboard.requestsSent")}</h2>
           <ul className="list">
-            {sent.length === 0 && <li className="empty">Nada por aqui ainda.</li>}
+            {sent.length === 0 && <li className="empty">{t("dashboard.nothingHere")}</li>}
             {sent.map((r) => (
               <li key={r.id}>
                 <div className="item-main">
                   {r.receiver?.id ? (
                     <button type="button" className="clickable-name" onClick={() => openChat(r.receiver)}>
-                      Para: {r.receiver.name}
+                      {t("dashboard.to")}: {r.receiver.name}
                     </button>
                   ) : (
-                    <strong>Para: Usuário</strong>
+                    <strong>{t("dashboard.to")}: {t("common.user")}</strong>
                   )}
                   <span>{r.message ?? ""}</span>
                 </div>
-                <span className={`badge ${r.status}`}>{r.status}</span>
+                <span className={`badge ${r.status}`}>{t(`status.${r.status}`, r.status)}</span>
               </li>
             ))}
           </ul>
         </section>
 
         <section className="panel wide">
-          <h2>Linha do tempo</h2>
+          <h2>{t("dashboard.timeline")}</h2>
           <form className="inline-form" onSubmit={handleCreateEvent}>
             <input
               type="text"
-              placeholder="Descrição do evento"
+              placeholder={t("dashboard.eventDescriptionPlaceholder")}
               value={eventDescription}
               onChange={(e) => setEventDescription(e.target.value)}
               required
             />
-            <button type="submit">Adicionar evento</button>
+            <button type="submit">{t("dashboard.addEvent")}</button>
           </form>
           <ul className="list">
-            {events.length === 0 && <li className="empty">Nada por aqui ainda.</li>}
+            {events.length === 0 && <li className="empty">{t("dashboard.nothingHere")}</li>}
             {events.map((ev) => (
               <li key={ev.id}>
                 <div className="item-main">
                   <strong>{ev.description}</strong>
-                  <span>{ev.eventDate ? new Date(ev.eventDate).toLocaleString("pt-BR") : ""}</span>
+                  <span>{ev.eventDate ? new Date(ev.eventDate).toLocaleString(dateLocale()) : ""}</span>
                 </div>
               </li>
             ))}

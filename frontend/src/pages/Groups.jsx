@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { connectGroupInviteSocket } from "../api/ws";
 import { useAuth } from "../context/auth-context";
@@ -19,6 +20,7 @@ function avatarColor(name) {
 export function Groups() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [groups, setGroups] = useState([]);
   const [invites, setInvites] = useState([]);
@@ -28,7 +30,7 @@ export function Groups() {
   function showToast(text) {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, text }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 6000);
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 6000);
   }
 
   const loadGroups = useCallback(async () => {
@@ -44,20 +46,22 @@ export function Groups() {
       try {
         await Promise.all([loadGroups(), loadInvites()]);
       } catch (err) {
-        showToast(err.message || "Não foi possível carregar seus grupos.");
+        showToast(err.message || t("groups.loadError"));
       }
     }
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadGroups, loadInvites]);
 
   useEffect(() => {
     const client = connectGroupInviteSocket(user.id, {
       onInvite: (invite) => {
-        showToast(`Você foi convidado para o grupo "${invite.group?.name ?? "um grupo"}"`);
+        showToast(t("groups.invitedBy", { name: invite.group?.name ?? t("common.groups") }));
         loadInvites();
       },
     });
     return () => client.deactivate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, loadInvites]);
 
   async function handleCreateGroup(e) {
@@ -69,7 +73,7 @@ export function Groups() {
       await loadGroups();
       navigate(`/groups/${group.id}`);
     } catch (err) {
-      showToast(err.message || "Não foi possível criar o grupo.");
+      showToast(err.message || t("groups.createError"));
     }
   }
 
@@ -78,7 +82,7 @@ export function Groups() {
       await Api.aceitarConviteDeGrupo(id);
       await Promise.all([loadInvites(), loadGroups()]);
     } catch (err) {
-      showToast(err.message || "Não foi possível aceitar o convite.");
+      showToast(err.message || t("groups.acceptError"));
     }
   }
 
@@ -87,46 +91,46 @@ export function Groups() {
       await Api.recusarConviteDeGrupo(id);
       await loadInvites();
     } catch (err) {
-      showToast(err.message || "Não foi possível recusar o convite.");
+      showToast(err.message || t("groups.declineError"));
     }
   }
 
   return (
     <>
       <div id="toastContainer">
-        {toasts.map((t) => (
-          <div className="toast" key={t.id}>{t.text}</div>
+        {toasts.map((toast) => (
+          <div className="toast" key={toast.id}>{toast.text}</div>
         ))}
       </div>
 
       <header className="topbar">
-        <div className="brand">AppStudying · Grupos</div>
+        <div className="brand">{t("groups.brand")}</div>
         <div className="user-info">
-          <button type="button" className="secondary" onClick={() => navigate("/dashboard")}>← Painel</button>
+          <button type="button" className="secondary" onClick={() => navigate("/dashboard")}>← {t("groups.panel")}</button>
         </div>
       </header>
 
       <main className="groups-main">
         <div className="groups-head">
           <div>
-            <h1>Seus grupos de estudo</h1>
-            <p>Crie uma sala, convide até 30 pessoas e veja o que cada uma está estudando agora.</p>
+            <h1>{t("groups.title")}</h1>
+            <p>{t("groups.subtitle")}</p>
           </div>
         </div>
 
         <section className="panel">
-          <h2>Convites pendentes</h2>
+          <h2>{t("groups.pendingInvites")}</h2>
           <ul className="list">
-            {invites.length === 0 && <li className="empty">Nenhum convite de grupo por enquanto.</li>}
+            {invites.length === 0 && <li className="empty">{t("groups.noPendingInvites")}</li>}
             {invites.map((inv) => (
               <li key={inv.id}>
                 <div className="item-main">
-                  <strong>{inv.group?.name ?? "Grupo"}</strong>
-                  <span>Convidado por {inv.invitedBy?.name ?? "alguém"}</span>
+                  <strong>{inv.group?.name ?? t("common.groups")}</strong>
+                  <span>{t("groups.invitedBy", { name: inv.invitedBy?.name ?? t("common.someone") })}</span>
                 </div>
                 <div className="actions">
-                  <button onClick={() => handleAcceptInvite(inv.id)}>Aceitar</button>
-                  <button className="danger" onClick={() => handleDeclineInvite(inv.id)}>Recusar</button>
+                  <button onClick={() => handleAcceptInvite(inv.id)}>{t("common.accept")}</button>
+                  <button className="danger" onClick={() => handleDeclineInvite(inv.id)}>{t("common.decline")}</button>
                 </div>
               </li>
             ))}
@@ -134,20 +138,20 @@ export function Groups() {
         </section>
 
         <section className="panel" style={{ marginTop: 22 }}>
-          <h2>Meus grupos</h2>
+          <h2>{t("groups.myGroups")}</h2>
           <form className="inline-form" onSubmit={handleCreateGroup}>
             <input
               type="text"
-              placeholder="Nome do novo grupo (ex: Cálculo Squad)"
+              placeholder={t("groups.newGroupPlaceholder")}
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               required
             />
-            <button type="submit">Criar grupo</button>
+            <button type="submit">{t("groups.createGroup")}</button>
           </form>
 
           <div className="group-grid">
-            {groups.length === 0 && <div className="empty">Você ainda não faz parte de nenhum grupo.</div>}
+            {groups.length === 0 && <div className="empty">{t("groups.noGroupsYet")}</div>}
             {groups.map((g) => (
               <button
                 type="button"
@@ -157,14 +161,14 @@ export function Groups() {
               >
                 <div className="group-card-top">
                   <h3>{g.name}</h3>
-                  <span className="cap">{g.memberCount}/30</span>
+                  <span className="cap">{t("groups.membersCount", { count: g.memberCount })}</span>
                 </div>
                 <span className="avatar" style={{ background: avatarColor(g.ownerName) }}>
                   {initials(g.ownerName)}
                 </span>
                 <span className={`live-badge ${g.studyingCount === 0 ? "idle" : ""}`}>
                   <span className="pulse-dot"></span>
-                  {g.studyingCount === 0 ? "Ninguém estudando agora" : `${g.studyingCount} estudando agora`}
+                  {g.studyingCount === 0 ? t("groups.noOneStudying") : t("groups.studyingNowCount", { count: g.studyingCount })}
                 </span>
               </button>
             ))}

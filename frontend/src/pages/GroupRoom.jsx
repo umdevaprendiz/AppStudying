@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { connectGroupChatSocket, connectGroupPresenceSocket } from "../api/ws";
 import { useAuth } from "../context/auth-context";
+import { dateLocale } from "../i18n/dateLocale";
 
 const AVATAR_COLORS = ["#3654ff", "#ff6f91", "#2b8a3e", "#e2445c", "#8a6d1a", "#2438b0"];
 
@@ -29,6 +31,7 @@ export function GroupRoom() {
   const groupId = Number(id);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [summary, setSummary] = useState(null);
   const [presence, setPresence] = useState([]);
@@ -47,7 +50,7 @@ export function GroupRoom() {
   function showToast(text) {
     const toastId = crypto.randomUUID();
     setToasts((prev) => [...prev, { id: toastId, text }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== toastId)), 6000);
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== toastId)), 6000);
   }
 
   const loadAll = useCallback(async () => {
@@ -66,10 +69,11 @@ export function GroupRoom() {
       try {
         await loadAll();
       } catch (err) {
-        showToast(err.message || "Não foi possível carregar o grupo.");
+        showToast(err.message || t("groupRoom.loadGroupError"));
       }
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAll]);
 
   useEffect(() => {
@@ -101,7 +105,7 @@ export function GroupRoom() {
       await Api.enviarMensagemGrupo(groupId, text.trim());
       setText("");
     } catch (err) {
-      showToast(err.message || "Não foi possível enviar a mensagem.");
+      showToast(err.message || t("groupRoom.sendMessageError"));
     }
   }
 
@@ -112,7 +116,7 @@ export function GroupRoom() {
     try {
       setPendingInvites(await Api.listarConvitesPendentesDoGrupo(groupId));
     } catch (err) {
-      showToast(err.message || "Não foi possível carregar os convites pendentes.");
+      showToast(err.message || t("groupRoom.loadPendingInvitesError"));
     }
   }
 
@@ -130,7 +134,7 @@ export function GroupRoom() {
       setSummary(resumo);
       setPendingInvites(pending);
     } catch (err) {
-      setInviteError(err.message || "Não foi possível enviar o convite.");
+      setInviteError(err.message || t("groupRoom.inviteError"));
     }
   }
 
@@ -139,7 +143,7 @@ export function GroupRoom() {
       await Api.sairDoGrupo(groupId);
       navigate("/groups");
     } catch (err) {
-      showToast(err.message || "Não foi possível sair do grupo.");
+      showToast(err.message || t("groupRoom.leaveError"));
     }
   }
 
@@ -148,14 +152,14 @@ export function GroupRoom() {
       await Api.excluirGrupo(groupId);
       navigate("/groups");
     } catch (err) {
-      showToast(err.message || "Não foi possível excluir o grupo.");
+      showToast(err.message || t("groupRoom.deleteError"));
     }
   }
 
   if (!summary) {
     return (
       <main className="groups-main">
-        <p>Carregando grupo...</p>
+        <p>{t("groupRoom.loading")}</p>
       </main>
     );
   }
@@ -166,40 +170,40 @@ export function GroupRoom() {
   return (
     <>
       <div id="toastContainer">
-        {toasts.map((t) => (
-          <div className="toast" key={t.id}>{t.text}</div>
+        {toasts.map((toast) => (
+          <div className="toast" key={toast.id}>{toast.text}</div>
         ))}
       </div>
 
       <header className="topbar">
-        <div className="brand">AppStudying · Grupos</div>
+        <div className="brand">{t("groups.brand")}</div>
         <div className="user-info">
-          <button type="button" className="secondary" onClick={() => navigate("/dashboard")}>Painel</button>
+          <button type="button" className="secondary" onClick={() => navigate("/dashboard")}>{t("groups.panel")}</button>
         </div>
       </header>
 
       <main className="groups-main">
         <div className="room-head">
           <div className="room-head-left">
-            <button type="button" className="secondary" onClick={() => navigate("/groups")}>← Grupos</button>
+            <button type="button" className="secondary" onClick={() => navigate("/groups")}>← {t("groupRoom.backToGroups")}</button>
             <div className="room-title">
               <h1>{summary.name}</h1>
-              <span className="cap">{summary.memberCount} / 30 membros</span>
+              <span className="cap">{t("groupRoom.membersOf30", { count: summary.memberCount })}</span>
             </div>
           </div>
           <div className="room-actions">
-            <button type="button" onClick={openInvite}>+ Convidar</button>
+            <button type="button" onClick={openInvite}>{t("groupRoom.invite")}</button>
             {isOwner ? (
-              <button type="button" className="danger" onClick={handleDelete}>Excluir grupo</button>
+              <button type="button" className="danger" onClick={handleDelete}>{t("groupRoom.deleteGroup")}</button>
             ) : (
-              <button type="button" className="danger" onClick={handleLeave}>Sair do grupo</button>
+              <button type="button" className="danger" onClick={handleLeave}>{t("groupRoom.leaveGroup")}</button>
             )}
           </div>
         </div>
 
         <div className="room-grid">
           <section className="panel roster-panel">
-            <h2>Quem está estudando agora</h2>
+            <h2>{t("groupRoom.whoIsStudying")}</h2>
             <ul className="roster-list">
               {[...presence].sort((a, b) => (b.studying ? 1 : 0) - (a.studying ? 1 : 0)).map((p) => (
                 <li key={p.userId} className="roster-row">
@@ -216,7 +220,7 @@ export function GroupRoom() {
                     ) : (
                       <span className="roster-status idle">
                         <span className="dot"></span>
-                        Sem sessão ativa agora
+                        {t("groupRoom.idle")}
                       </span>
                     )}
                   </div>
@@ -230,18 +234,18 @@ export function GroupRoom() {
 
           <section className="panel group-chat-panel">
             <div className="group-chat-head">
-              <h2>Chat do grupo</h2>
-              <span className="badge">{summary.memberCount} pessoas</span>
+              <h2>{t("groupRoom.groupChat")}</h2>
+              <span className="badge">{t("groupRoom.peopleCount", { count: summary.memberCount })}</span>
             </div>
             <div className="group-chat-messages">
-              {messages.length === 0 && <div className="empty">Nenhuma mensagem ainda. Diga oi!</div>}
+              {messages.length === 0 && <div className="empty">{t("groupRoom.noMessages")}</div>}
               {messages.map((m) => (
                 <div key={m.id} className={`msg-group ${m.sender?.id === user.id ? "mine" : "theirs"}`}>
-                  {m.sender?.id !== user.id && <span className="msg-sender">{m.sender?.name ?? "Alguém"}</span>}
+                  {m.sender?.id !== user.id && <span className="msg-sender">{m.sender?.name ?? t("common.someone")}</span>}
                   <div className={`chat-bubble ${m.sender?.id === user.id ? "mine" : "theirs"}`}>
                     <span>{m.content}</span>
                     <span className="chat-time">
-                      {m.sentAt ? new Date(m.sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                      {m.sentAt ? new Date(m.sentAt).toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
                 </div>
@@ -251,12 +255,12 @@ export function GroupRoom() {
             <form className="group-chat-input" onSubmit={handleSend}>
               <input
                 type="text"
-                placeholder="Escreva para o grupo..."
+                placeholder={t("groupRoom.chatPlaceholder")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 autoComplete="off"
               />
-              <button type="submit">Enviar</button>
+              <button type="submit">{t("common.send")}</button>
             </form>
           </section>
         </div>
@@ -266,27 +270,27 @@ export function GroupRoom() {
         <div className="chat-overlay" onClick={() => setInviteOpen(false)}>
           <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
             <div className="chat-modal-header">
-              <strong>Convidar para {summary.name}</strong>
-              <button type="button" className="secondary" onClick={() => setInviteOpen(false)}>Fechar</button>
+              <strong>{t("groupRoom.inviteTitle", { groupName: summary.name })}</strong>
+              <button type="button" className="secondary" onClick={() => setInviteOpen(false)}>{t("common.close")}</button>
             </div>
 
             <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
               <form className="inline-form" onSubmit={handleInvite}>
                 <input
                   type="email"
-                  placeholder="e-mail da pessoa"
+                  placeholder={t("groupRoom.inviteEmailPlaceholder")}
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   required
                 />
-                <button type="submit">Convidar</button>
+                <button type="submit">{t("groupRoom.inviteSubmit")}</button>
               </form>
               <div className="error-msg">{inviteError}</div>
 
               <div>
                 <div className="cap-meter-label">
-                  <span>Ocupação do grupo</span>
-                  <span className="count">{summary.memberCount} / 30</span>
+                  <span>{t("groupRoom.occupancy")}</span>
+                  <span className="count">{t("groupRoom.membersOf30", { count: summary.memberCount })}</span>
                 </div>
                 <div className="cap-meter-track">
                   <div className={`cap-meter-fill ${capPct >= 80 ? "near-cap" : ""}`} style={{ width: `${capPct}%` }} />
@@ -294,13 +298,13 @@ export function GroupRoom() {
               </div>
 
               <div>
-                <div className="cap-meter-label"><span>Convites aguardando resposta</span></div>
+                <div className="cap-meter-label"><span>{t("groupRoom.pendingInvitesLabel")}</span></div>
                 <ul className="list">
-                  {pendingInvites.length === 0 && <li className="empty">Nenhum convite aguardando resposta.</li>}
+                  {pendingInvites.length === 0 && <li className="empty">{t("groupRoom.noPendingInvites")}</li>}
                   {pendingInvites.map((inv) => (
                     <li key={inv.id}>
-                      <div className="item-main"><strong>{inv.user?.name ?? "Usuário"}</strong></div>
-                      <span className="badge PENDENTE">PENDENTE</span>
+                      <div className="item-main"><strong>{inv.user?.name ?? t("common.user")}</strong></div>
+                      <span className="badge PENDENTE">{t("status.PENDENTE")}</span>
                     </li>
                   ))}
                 </ul>

@@ -1,3 +1,5 @@
+import i18n from "../i18n";
+
 export const API_BASE_URL = "";
 
 function readCookie(name) {
@@ -27,6 +29,11 @@ export async function request(method, path, { params, body } = {}) {
   }
 
   const options = { method, headers: {}, credentials: "include" };
+  // Sobrescreve o Accept-Language automático do navegador com o idioma
+  // escolhido na interface — é o que permite o GlobalExceptionHandler do
+  // backend devolver a mensagem de erro já traduzida (ver
+  // ErrorMessageTranslations no backend).
+  options.headers["Accept-Language"] = i18n.language || "en";
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
@@ -41,8 +48,10 @@ export async function request(method, path, { params, body } = {}) {
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    const message = (data && (data.message || data.error)) || text || `Erro ${response.status}`;
-    throw new Error(message);
+    const message = (data && (data.message || data.error)) || text || i18n.t("common.genericHttpError", { status: response.status });
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
   return data;
 }

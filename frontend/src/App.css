@@ -226,6 +226,19 @@ button.danger {
   color: #2b8a3e;
 }
 
+.language-switcher {
+  width: auto;
+  padding: 9px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: "Archivo", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 main {
   max-width: 1100px;
   margin: 24px auto;

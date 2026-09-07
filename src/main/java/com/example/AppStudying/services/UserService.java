@@ -4,6 +4,7 @@ import com.example.AppStudying.model.User;
 import com.example.AppStudying.repository.UserRepository;
 import com.example.AppStudying.security.RateLimiterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +82,7 @@ public class UserService {
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(VERIFICATION_TOKEN_VALID_HOURS));
 
         User salvo = userRepository.save(user);
-        emailService.enviarEmailVerificacao(salvo.getEmail(), token);
+        emailService.enviarEmailVerificacao(salvo.getEmail(), token, LocaleContextHolder.getLocale().getLanguage());
         return salvo;
         }
 
@@ -122,7 +123,7 @@ public class UserService {
         user.setVerificationToken(token);
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(VERIFICATION_TOKEN_VALID_HOURS));
         userRepository.save(user);
-        emailService.enviarEmailVerificacao(user.getEmail(), token);
+        emailService.enviarEmailVerificacao(user.getEmail(), token, LocaleContextHolder.getLocale().getLanguage());
         }
 
         // Chamado antes de tentar autenticar: sem isso, /api/users/login é
@@ -154,7 +155,7 @@ public class UserService {
         user.setDeletionToken(token);
         user.setDeletionTokenExpiry(LocalDateTime.now().plusHours(EXCLUSAO_TOKEN_VALID_HOURS));
         userRepository.save(user);
-        emailService.enviarEmailConfirmacaoExclusao(user.getEmail(), token);
+        emailService.enviarEmailConfirmacaoExclusao(user.getEmail(), token, LocaleContextHolder.getLocale().getLanguage());
         }
 
         @Transactional
@@ -194,7 +195,7 @@ public class UserService {
         user.setEmailChangeToken(token);
         user.setEmailChangeTokenExpiry(LocalDateTime.now().plusHours(TROCA_EMAIL_TOKEN_VALID_HOURS));
         userRepository.save(user);
-        emailService.enviarEmailTrocaEmail(novoEmail, token);
+        emailService.enviarEmailTrocaEmail(novoEmail, token, LocaleContextHolder.getLocale().getLanguage());
         }
 
         @Transactional
