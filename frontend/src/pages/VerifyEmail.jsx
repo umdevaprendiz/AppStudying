@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 
 export function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  const { t } = useTranslation();
   const [status, setStatus] = useState(() => (token ? "verificando" : "erro"));
-  const [error, setError] = useState(() => (token ? "" : "Link inválido: token não informado."));
+  const [error, setError] = useState(() => (token ? "" : t("auth.verifyEmail.invalidLink")));
   // O React.StrictMode (só em dev) roda o efeito duas vezes de propósito; sem
   // essa guarda, a segunda chamada usaria um token já consumido pela primeira
   // e mostraria "inválido" por cima de uma verificação que já deu certo.
@@ -19,29 +21,29 @@ export function VerifyEmail() {
       .then(() => setStatus("sucesso"))
       .catch((err) => {
         setStatus("erro");
-        setError(err.message || "Não foi possível verificar seu e-mail.");
+        setError(err.message || t("auth.verifyEmail.genericError"));
       });
-  }, [token]);
+  }, [token, t]);
 
   return (
     <div className="auth-wrapper">
       <div className="card">
-        {status === "verificando" && <h1>Verificando seu e-mail...</h1>}
+        {status === "verificando" && <h1>{t("auth.verifyEmail.verifying")}</h1>}
 
         {status === "sucesso" && (
           <>
-            <h1>E-mail confirmado!</h1>
-            <p>Sua conta foi ativada. Você já pode entrar.</p>
-            <Link to="/login" className="full-width">Ir para o login</Link>
+            <h1>{t("auth.verifyEmail.successTitle")}</h1>
+            <p>{t("auth.verifyEmail.successMessage")}</p>
+            <Link to="/login" className="full-width">{t("auth.verifyEmail.goToLogin")}</Link>
           </>
         )}
 
         {status === "erro" && (
           <>
-            <h1>Não foi possível verificar</h1>
+            <h1>{t("auth.verifyEmail.errorTitle")}</h1>
             <p className="error-msg">{error}</p>
             <p className="hint">
-              O link pode ter expirado. <Link to="/login">Volte ao login</Link> e peça um novo e-mail de verificação.
+              <Trans i18nKey="auth.verifyEmail.expiredHint" components={{ 1: <Link to="/login" /> }} />
             </p>
           </>
         )}

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { useAuth } from "../context/auth-context";
 
 export function Register() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [cadastrado, setCadastrado] = useState(false);
@@ -22,7 +24,7 @@ export function Register() {
       await Api.registrarUser(form);
       setCadastrado(true);
     } catch (err) {
-      setError(err.message || "Não foi possível concluir o cadastro.");
+      setError(err.message || t("auth.register.genericError"));
     }
   }
 
@@ -30,10 +32,10 @@ export function Register() {
     return (
       <div className="auth-wrapper">
         <div className="card">
-          <h1>Quase lá!</h1>
-          <p>Enviamos um e-mail de confirmação para <strong>{form.email}</strong>.</p>
-          <p className="hint">Clique no link recebido pra ativar sua conta e poder entrar.</p>
-          <Link to="/login" className="full-width">Ir para o login</Link>
+          <h1>{t("auth.register.doneTitle")}</h1>
+          <p><Trans i18nKey="auth.register.doneMessage" values={{ email: form.email }} components={{ 1: <strong /> }} /></p>
+          <p className="hint">{t("auth.register.doneHint")}</p>
+          <Link to="/login" className="full-width">{t("auth.register.goToLogin")}</Link>
         </div>
       </div>
     );
@@ -42,21 +44,21 @@ export function Register() {
   return (
     <div className="auth-wrapper">
       <form className="card" onSubmit={handleSubmit}>
-        <h1>Criar conta</h1>
+        <h1>{t("auth.register.title")}</h1>
 
-        <label htmlFor="name">Nome</label>
+        <label htmlFor="name">{t("auth.register.name")}</label>
         <input id="name" type="text" value={form.name} onChange={updateField("name")} required />
 
-        <label htmlFor="email">E-mail</label>
+        <label htmlFor="email">{t("auth.register.email")}</label>
         <input id="email" type="email" value={form.email} onChange={updateField("email")} required />
 
-        <label htmlFor="password">Senha</label>
+        <label htmlFor="password">{t("auth.register.password")}</label>
         <input id="password" type="password" value={form.password} onChange={updateField("password")} required />
 
-        <button type="submit" className="full-width">Cadastrar</button>
+        <button type="submit" className="full-width">{t("auth.register.submit")}</button>
         <div className="error-msg">{error}</div>
 
-        <p className="hint">Já tem conta? <Link to="/login">Entrar</Link></p>
+        <p className="hint">{t("auth.register.haveAccount")} <Link to="/login">{t("auth.register.login")}</Link></p>
       </form>
     </div>
   );

@@ -70,6 +70,11 @@ A ideia central é unir organização pessoal de estudos com um componente socia
 - [x] Proteção contra mass assignment no cadastro de usuário e criação de matéria (o `id` enviado pelo cliente é sempre ignorado)
 - [x] Testes de integração (MockMvc) cobrindo o fluxo de login, bloqueio de acesso não autenticado e bloqueio de acesso a recurso de outro usuário
 
+**Internacionalização**
+- [x] Interface inteira em inglês (idioma padrão), português e espanhol, com troca de idioma persistida no navegador (`react-i18next` + `i18next-browser-languagedetector`, detecta o idioma do navegador no primeiro acesso)
+- [x] Mensagens de erro da API também traduzidas na borda (`GlobalExceptionHandler`), a partir do header `Accept-Language` que o front envia em toda requisição — o idioma escolhido na interface vale pra API também, sem precisar guardar preferência de idioma no banco
+- [x] E-mails transacionais (verificação de conta, troca de e-mail, exclusão de conta) enviados no idioma da pessoa no momento da ação, pelo mesmo mecanismo
+
 **Infraestrutura**
 - [x] Persistência com MySQL rodando via Docker Compose em dev (volume nomeado) e MySQL gerenciado (Aiven) em produção, com conexão criptografada (SSL obrigatório)
 - [x] Cache habilitado (`@EnableCaching`) para consultas de matéria por id
@@ -154,6 +159,7 @@ A API também tem documentação interativa via Swagger UI, em `http://localhost
 | Front-end | React (Vite) |
 | Roteamento (front-end) | React Router |
 | WebSocket (front-end) | @stomp/stompjs + sockjs-client |
+| Internacionalização (front-end) | react-i18next + i18next-browser-languagedetector |
 
 ---
 
@@ -178,16 +184,18 @@ AppStudying/
 │   ├── model/                # User, Matter, Topic, StudySession, StudyRequest,
 │   │                         # Conversation, ChatMessage, TimeLine, Group, GroupMember, GroupMessage
 │   ├── enums/                # RequestStatus, TypeStatus
-│   └── dto/                  # MatterStudySummaryDTO, GroupSummaryDTO, GroupMemberPresenceDTO, etc.
+│   ├── dto/                  # MatterStudySummaryDTO, GroupSummaryDTO, GroupMemberPresenceDTO, etc.
+│   └── exception/            # GlobalExceptionHandler, ErrorMessageTranslations (mensagens em en/pt/es)
 ├── src/main/resources/
 │   ├── application.properties, application-prod.properties
 │   └── db/migration/         # Migrations versionadas (Flyway, V1 a V6)
 ├── src/test/java/...         # Testes unitários e de integração (JUnit 5 + Mockito + MockMvc)
 ├── frontend/
 │   └── src/
-│       ├── api/              # http.js (fetch wrapper + CSRF), api.js (chamadas REST), ws.js (WebSocket)
-│       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer, MatterTopics
+│       ├── api/              # http.js (fetch wrapper + CSRF + Accept-Language), api.js (chamadas REST), ws.js (WebSocket)
+│       ├── components/       # ProtectedRoute, ChatModal, InboxDrawer, MatterTopics, LanguageSwitcher
 │       ├── context/          # AuthContext (usuário logado via localStorage)
+│       ├── i18n/             # Config do react-i18next e traduções (locales/en.json, pt.json, es.json)
 │       └── pages/            # Login, Register, VerifyEmail, Dashboard, Profile,
 │                              # Settings, DeleteAccount, Groups, GroupRoom
 ├── .github/workflows/ci.yml  # CI: testes com MySQL real, lint/build do frontend, build da imagem

@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 
 function otherUser(conversation, currentUserId) {
@@ -6,6 +7,7 @@ function otherUser(conversation, currentUserId) {
 }
 
 export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [conversations, setConversations] = useState([]);
@@ -45,7 +47,7 @@ export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) 
         type="button"
         className="inbox-fab"
         onClick={handleOpen}
-        aria-label="Mensagens"
+        aria-label={t("inbox.ariaLabel")}
       >
         💬
         {unreadCount > 0 && <span className="inbox-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
@@ -55,23 +57,23 @@ export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) 
         <div className="inbox-overlay" onClick={() => setOpen(false)}>
           <div className="inbox-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="inbox-drawer-header">
-              <h2>Mensagens</h2>
-              <button type="button" className="secondary" onClick={() => setOpen(false)}>Fechar</button>
+              <h2>{t("inbox.title")}</h2>
+              <button type="button" className="secondary" onClick={() => setOpen(false)}>{t("common.close")}</button>
             </div>
 
             <div className="inbox-drawer-body">
               <section>
-                <h3>Solicitações de mensagem</h3>
+                <h3>{t("inbox.messageRequests")}</h3>
                 <ul className="list">
-                  {requests.length === 0 && <li className="empty">Nenhuma solicitação pendente.</li>}
+                  {requests.length === 0 && <li className="empty">{t("inbox.noPendingRequests")}</li>}
                   {requests.map((r) => (
                     <li key={r.id}>
                       <div className="item-main">
-                        <strong>{r.requester?.name ?? "Usuário"}</strong>
+                        <strong>{r.requester?.name ?? t("common.user")}</strong>
                       </div>
                       <div className="actions">
-                        <button onClick={() => handleAccept(r.id)}>Aceitar</button>
-                        <button className="danger" onClick={() => handleDecline(r.id)}>Recusar</button>
+                        <button onClick={() => handleAccept(r.id)}>{t("common.accept")}</button>
+                        <button className="danger" onClick={() => handleDecline(r.id)}>{t("common.decline")}</button>
                       </div>
                     </li>
                   ))}
@@ -79,13 +81,13 @@ export function InboxDrawer({ currentUserId, unreadCount, onOpenConversation }) 
               </section>
 
               <section>
-                <h3>Conversas</h3>
+                <h3>{t("inbox.conversations")}</h3>
                 <ul className="list">
-                  {conversations.length === 0 && <li className="empty">Nenhuma conversa ainda.</li>}
+                  {conversations.length === 0 && <li className="empty">{t("inbox.noConversations")}</li>}
                   {conversations.map((c) => (
                     <li key={c.id} className="clickable-row" onClick={() => handleOpenConversation(c)}>
                       <div className="item-main">
-                        <strong>{otherUser(c, currentUserId)?.name ?? "Usuário"}</strong>
+                        <strong>{otherUser(c, currentUserId)?.name ?? t("common.user")}</strong>
                       </div>
                     </li>
                   ))}

@@ -323,7 +323,7 @@ public class UserServiceTeste {
 
         assertNotNull(user.getVerificationToken());
         verify(userRepository, times(1)).save(user);
-        verify(emailService, times(1)).enviarEmailVerificacao(eq(email), anyString());
+        verify(emailService, times(1)).enviarEmailVerificacao(eq(email), anyString(), any());
     }
 
     @Test
@@ -340,7 +340,7 @@ public class UserServiceTeste {
         });
 
         verify(userRepository, never()).save(any(User.class));
-        verify(emailService, never()).enviarEmailVerificacao(any(), any());
+        verify(emailService, never()).enviarEmailVerificacao(any(), any(), any());
     }
 
     @Test
@@ -363,7 +363,7 @@ public class UserServiceTeste {
             userService.reenviarVerificacao(email);
         });
 
-        verify(emailService, times(3)).enviarEmailVerificacao(any(), any());
+        verify(emailService, times(3)).enviarEmailVerificacao(any(), any(), any());
     }
 
     @Test
@@ -457,7 +457,7 @@ public class UserServiceTeste {
 
         assertNotNull(user.getDeletionToken());
         verify(userRepository, times(1)).save(user);
-        verify(emailService, times(1)).enviarEmailConfirmacaoExclusao(eq(user.getEmail()), anyString());
+        verify(emailService, times(1)).enviarEmailConfirmacaoExclusao(eq(user.getEmail()), anyString(), any());
     }
 
     @Test
@@ -479,7 +479,7 @@ public class UserServiceTeste {
             userService.solicitarExclusaoConta(userId);
         });
 
-        verify(emailService, times(3)).enviarEmailConfirmacaoExclusao(any(), any());
+        verify(emailService, times(3)).enviarEmailConfirmacaoExclusao(any(), any(), any());
     }
 
     @Test

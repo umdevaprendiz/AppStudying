@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 
 export function ConfirmEmailChange() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  const { t } = useTranslation();
 
   const [status, setStatus] = useState(() => (token ? "confirmando" : "erro"));
-  const [error, setError] = useState(() => (token ? "" : "Link inválido: token não informado."));
+  const [error, setError] = useState(() => (token ? "" : t("auth.confirmEmailChange.invalidLink")));
 
   // Mesmo padrão da exclusão de conta: troca de e-mail muda o login da
   // conta, então só age quando a pessoa clica no botão — nunca automaticamente
@@ -21,7 +23,7 @@ export function ConfirmEmailChange() {
       setStatus("sucesso");
     } catch (err) {
       setStatus("erro");
-      setError(err.message || "Não foi possível confirmar a troca de e-mail.");
+      setError(err.message || t("auth.confirmEmailChange.genericError"));
     }
   }
 
@@ -30,31 +32,31 @@ export function ConfirmEmailChange() {
       <div className="card">
         {status === "confirmando" && (
           <>
-            <h1>Confirmar troca de e-mail</h1>
-            <p>Clique no botão abaixo para confirmar o novo e-mail da sua conta.</p>
+            <h1>{t("auth.confirmEmailChange.title")}</h1>
+            <p>{t("auth.confirmEmailChange.message")}</p>
             <button className="full-width" onClick={handleConfirmar}>
-              Confirmar troca de e-mail
+              {t("auth.confirmEmailChange.confirmButton")}
             </button>
-            <p className="hint"><Link to="/dashboard">Cancelar e voltar</Link></p>
+            <p className="hint"><Link to="/dashboard">{t("auth.confirmEmailChange.cancelLink")}</Link></p>
           </>
         )}
 
-        {status === "confirmando-envio" && <h1>Confirmando...</h1>}
+        {status === "confirmando-envio" && <h1>{t("auth.confirmEmailChange.confirming")}</h1>}
 
         {status === "sucesso" && (
           <>
-            <h1>E-mail atualizado!</h1>
-            <p>Seu e-mail foi trocado com sucesso. Use o novo e-mail no seu próximo login.</p>
-            <Link to="/login" className="full-width">Ir para o login</Link>
+            <h1>{t("auth.confirmEmailChange.successTitle")}</h1>
+            <p>{t("auth.confirmEmailChange.successMessage")}</p>
+            <Link to="/login" className="full-width">{t("auth.confirmEmailChange.goToLogin")}</Link>
           </>
         )}
 
         {status === "erro" && (
           <>
-            <h1>Não foi possível confirmar</h1>
+            <h1>{t("auth.confirmEmailChange.errorTitle")}</h1>
             <p className="error-msg">{error}</p>
             <p className="hint">
-              O link pode ter expirado. <Link to="/settings">Volte em Configurações</Link> e peça a troca novamente.
+              <Trans i18nKey="auth.confirmEmailChange.expiredHint" components={{ 1: <Link to="/settings" /> }} />
             </p>
           </>
         )}

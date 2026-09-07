@@ -91,7 +91,10 @@ public class SecurityIntegrationTeste {
 
         // Com o GlobalExceptionHandler, a IllegalStateException de permissão agora vira
         // uma resposta HTTP 403 limpa em vez de propagar como exceção não tratada.
-        mockMvc.perform(get("/api/matters/user/" + outro.getId()).cookie(sessionCookie))
+        // Accept-Language explícito: sem isso, o locale padrão da JVM que roda o
+        // teste decide o idioma da mensagem (ErrorMessageTranslations), tornando
+        // essa asserção de texto frágil entre ambientes.
+        mockMvc.perform(get("/api/matters/user/" + outro.getId()).cookie(sessionCookie).header("Accept-Language", "pt"))
                 .andExpect(status().isForbidden())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("permissão")));
     }

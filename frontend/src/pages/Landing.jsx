@@ -1,54 +1,56 @@
 import { Link, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/auth-context";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
-const FEATURES = [
-  { color: "#f4c43a", title: "Matérias", text: "Crie suas matérias e organize os tópicos de cada uma." },
-  { color: "#3654ff", title: "Cronômetro", text: "Aperta start, estuda, aperta stop. Simples assim." },
-  { color: "#ff6f91", title: "Parcerias", text: "Manda um pedido de parceria de estudo pra quem quiser." },
-  { color: "#3654ff", title: "Chat", text: "Bate um papo com seus parceiros, direto no app." },
-  { color: "#f4c43a", title: "Linha do tempo", text: "Registra o que rolou na sua jornada de estudos." },
-  { color: "#3654ff", title: "Perfil", text: "Mostra pra galera o que você tá estudando." },
+const FEATURE_KEYS = [
+  { key: "matters", color: "#f4c43a" },
+  { key: "timer", color: "#3654ff" },
+  { key: "partnerships", color: "#ff6f91" },
+  { key: "chat", color: "#3654ff" },
+  { key: "timeline", color: "#f4c43a" },
+  { key: "profile", color: "#3654ff" },
 ];
 
 export function Landing() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="landing">
       <header className="landing-nav">
         <div className="wrap landing-nav-inner">
-          <span className="brand">AppStudying</span>
+          <span className="brand">{t("common.appName")}</span>
           <div className="landing-nav-actions">
-            <Link to="/login" className="btn-outline">Entrar</Link>
-            <Link to="/register" className="btn-blue">Criar conta</Link>
+            <LanguageSwitcher />
+            <Link to="/login" className="btn-outline">{t("landing.login")}</Link>
+            <Link to="/register" className="btn-blue">{t("landing.createAccount")}</Link>
           </div>
         </div>
       </header>
 
       <section className="landing-hero">
         <div className="wrap">
-          <p className="landing-eyebrow">Rede de estudantes</p>
-          <h1>Encontre gente pra estudar <mark>junto</mark>.</h1>
-          <p className="landing-sub">
-            O AppStudying junta organização pessoal de estudos com uma rede de verdade:
-            peça parceria de estudo, converse em tempo real e acompanhe sua evolução ao
-            lado de outras pessoas.
-          </p>
+          <p className="landing-eyebrow">{t("landing.eyebrow")}</p>
+          <h1>
+            {t("landing.heroTitlePre")} <mark>{t("landing.heroTitleMark")}</mark>.
+          </h1>
+          <p className="landing-sub">{t("landing.heroSub")}</p>
           <div className="landing-ctas">
-            <Link to="/register" className="btn-blue">Criar conta</Link>
-            <Link to="/login" className="btn-outline">Entrar</Link>
+            <Link to="/register" className="btn-blue">{t("landing.createAccount")}</Link>
+            <Link to="/login" className="btn-outline">{t("landing.login")}</Link>
           </div>
         </div>
       </section>
 
       <section className="landing-board">
         <div className="wrap landing-grid">
-          {FEATURES.map((f) => (
-            <div className="landing-pin" key={f.title}>
+          {FEATURE_KEYS.map((f) => (
+            <div className="landing-pin" key={f.key}>
               <span className="landing-dot" style={{ background: f.color }} />
-              <h3>{f.title}</h3>
-              <p>{f.text}</p>
+              <h3>{t(`landing.features.${f.key}.title`)}</h3>
+              <p>{t(`landing.features.${f.key}.text`)}</p>
             </div>
           ))}
         </div>
@@ -56,17 +58,15 @@ export function Landing() {
 
       <section className="landing-band">
         <div className="wrap">
-          <p className="landing-band-big">Transforme estudar sozinho em estudar em grupo.</p>
-          <p className="landing-band-small">
-            Sem grupo de WhatsApp lotado, sem combinar por mensagem perdida — tudo dentro do app.
-          </p>
+          <p className="landing-band-big">{t("landing.bandBig")}</p>
+          <p className="landing-band-small">{t("landing.bandSmall")}</p>
         </div>
       </section>
 
       <footer className="landing-footer">
         <div className="wrap landing-footer-inner">
-          <span>AppStudying — sua rede de estudos.</span>
-          <span>Feito por Sérgio Souza.</span>
+          <span>{t("landing.footerTagline")}</span>
+          <span>{t("landing.footerCredit")}</span>
         </div>
       </footer>
     </div>

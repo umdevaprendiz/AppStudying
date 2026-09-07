@@ -2,6 +2,7 @@ package com.example.AppStudying.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
         HttpStatus status = HttpStatus.NOT_FOUND;
-        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), "Recurso não encontrado."));
+        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), mensagem("Recurso não encontrado.")));
     }
 
     // Mais específico que AuthenticationException — o Spring resolve pelo
@@ -37,41 +38,44 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.METHOD_NOT_ALLOWED;
         log.warn("Método não suportado: {}", ex.getMessage());
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Método não permitido para esse endpoint."));
+                .body(new ErrorResponse(status.value(), mensagem("Método não permitido para esse endpoint.")));
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ErrorResponse> handleDisabled(DisabledException ex) {
         HttpStatus status = HttpStatus.FORBIDDEN;
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada."));
+                .body(new ErrorResponse(status.value(), mensagem("Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.")));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        // A checagem de status usa sempre a mensagem original em português
+        // (statusParaMensagem casa palavras-chave em PT) — só a mensagem que
+        // vai pro corpo da resposta é traduzida.
         HttpStatus status = statusParaMensagem(ex.getMessage());
-        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), ex.getMessage()));
+        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), mensagem(ex.getMessage())));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         HttpStatus status = HttpStatus.CONFLICT;
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Já existe um registro com esses dados."));
+                .body(new ErrorResponse(status.value(), mensagem("Já existe um registro com esses dados.")));
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         HttpStatus status = HttpStatus.UNAUTHORIZED;
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Email ou senha inválidos."));
+                .body(new ErrorResponse(status.value(), mensagem("Email ou senha inválidos.")));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         HttpStatus status = HttpStatus.FORBIDDEN;
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Você não tem permissão para acessar esse recurso."));
+                .body(new ErrorResponse(status.value(), mensagem("Você não tem permissão para acessar esse recurso.")));
     }
 
     @ExceptionHandler(Exception.class)
@@ -81,7 +85,15 @@ public class GlobalExceptionHandler {
         log.error("Erro inesperado não tratado", ex);
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(status)
-                .body(new ErrorResponse(status.value(), "Ocorreu um erro inesperado. Tente novamente mais tarde."));
+                .body(new ErrorResponse(status.value(), mensagem("Ocorreu um erro inesperado. Tente novamente mais tarde.")));
+    }
+
+    // Traduz a mensagem final pro idioma da requisição (header Accept-Language,
+    // enviado pelo frontend a partir do idioma escolhido na interface — ver
+    // ErrorMessageTranslations). Sem tradução cadastrada, devolve o
+    // português original.
+    private String mensagem(String mensagemOriginal) {
+        return ErrorMessageTranslations.translate(mensagemOriginal, LocaleContextHolder.getLocale().getLanguage());
     }
 
     private HttpStatus statusParaMensagem(String mensagem) {

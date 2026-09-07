@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Api } from "../api/api";
 import { connectChatSocket } from "../api/ws";
 import { useAuth } from "../context/auth-context";
@@ -16,6 +17,7 @@ export function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [profile, setProfile] = useState(null);
   const [summary, setSummary] = useState([]);
@@ -65,19 +67,19 @@ export function Profile() {
     try {
       await Api.enviarMensagem(profileId, text);
     } catch (err) {
-      window.alert(err.message || "Não foi possível enviar a mensagem.");
+      window.alert(err.message || t("profile.sendMessageError"));
     }
   }
 
   if (!profile) {
-    return <div className="auth-wrapper"><div className="card">Carregando perfil...</div></div>;
+    return <div className="auth-wrapper"><div className="card">{t("profile.loadingProfile")}</div></div>;
   }
 
   return (
     <>
       <header className="topbar">
-        <div className="brand">AppStudying</div>
-        <button className="secondary" onClick={() => navigate(-1)}>Voltar</button>
+        <div className="brand">{t("common.appName")}</div>
+        <button className="secondary" onClick={() => navigate(-1)}>{t("profile.back")}</button>
       </header>
 
       <main className="profile-main">
@@ -88,19 +90,19 @@ export function Profile() {
             <span className="item-main"><span>{profile.email}</span></span>
           </div>
           {user.id !== profileId && (
-            <button className="full-width profile-message-btn" onClick={openChat}>Mandar mensagem</button>
+            <button className="full-width profile-message-btn" onClick={openChat}>{t("profile.sendMessage")}</button>
           )}
         </section>
 
         <section className="panel wide">
-          <h2>Matérias estudadas</h2>
+          <h2>{t("profile.studiedSubjects")}</h2>
           <ul className="list">
-            {summary.length === 0 && <li className="empty">Nenhuma sessão de estudo registrada ainda.</li>}
+            {summary.length === 0 && <li className="empty">{t("profile.noSessions")}</li>}
             {summary.map((s) => (
               <li key={s.matterName}>
                 <div className="item-main">
                   <strong>{s.matterName}</strong>
-                  <span>{s.totalSessions} sessão(ões)</span>
+                  <span>{t("profile.sessionsCount", { count: s.totalSessions })}</span>
                 </div>
                 <span className="timer-display">{formatMinutes(s.totalMinutes)}</span>
               </li>
