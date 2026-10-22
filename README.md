@@ -12,7 +12,7 @@
 
 ## 🚧 Status do projeto
 
-**No ar:** [appstudying.onrender.com](https://appstudying.onrender.com) — hospedado no Render (free tier: pode levar ~50s pra "acordar" no primeiro acesso após um período sem uso) com banco MySQL gerenciado no Aiven.
+**OFF:**
 
 Projeto completo e funcional: autenticação com verificação de e-mail, autorização, tempo real, configurações de conta (troca de senha, exclusão com confirmação por e-mail e expurgo automático de contas inativas), testes automatizados e pipeline de deploy (Docker, CI, migrations versionadas via Flyway).
 
